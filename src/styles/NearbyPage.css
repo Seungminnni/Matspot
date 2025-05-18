@@ -1,0 +1,109 @@
+.nearby-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 20px;
+}
+
+.nearby-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.nearby-header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.nearby-header p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.map-container {
+    width: 100%;
+    height: 500px;
+    background-color: #f5f5f5;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.map-placeholder {
+    color: #999;
+    font-size: 16px;
+}
+
+.nearby-filters {
+    margin: 1.5rem 0;
+    display: flex;
+    justify-content: center;
+}
+
+.distance-filter {
+    position: relative;
+}
+
+.distance-filter select {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    appearance: none;
+    background-color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    min-width: 120px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.distance-filter select:hover {
+    border-color: #aaa;
+}
+
+.distance-filter select:focus {
+    outline: none;
+    border-color: #4285f4;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.distance-filter::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #666;
+    pointer-events: none;
+}
+
+.distance-filter select {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    cursor: pointer;
+}
+
+.distance-filter select:focus {
+    border-color: #FF6B6B;
+}
+
+.nearby-list {
+    margin-top: 2rem;
+}
+
+.searching-message {
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+} 
