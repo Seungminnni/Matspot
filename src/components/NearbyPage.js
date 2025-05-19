@@ -5,9 +5,23 @@ import '../styles/NearbyPage.css';
 
 const NearbyPage = () => {
     const [distance, setDistance] = useState(1000);
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
     
     const handleDistanceChange = (e) => {
         setDistance(Number(e.target.value));
+    };
+    
+    const handleSearch = (keyword) => {
+        setSearchKeyword(keyword);
+        setIsSearching(true);
+    };
+    
+    // 검색 결과를 받아오는 콜백 함수
+    const handleSearchResults = (results) => {
+        setSearchResults(results);
+        setIsSearching(false);
     };
     
     return (
@@ -16,9 +30,13 @@ const NearbyPage = () => {
                 <h1>내 주변 맛집</h1>
                 <p>현재 위치 기준 {distance < 1000 ? `${distance}m` : `${distance/1000}km`} 이내의 맛집을 찾아보세요</p>
             </div>
-            <SearchBar />
+            <SearchBar onSearch={handleSearch} />
             <div className="map-container">
-                <KakaoMap distance={distance} />
+                <KakaoMap 
+                    distance={distance} 
+                    searchKeyword={searchKeyword} 
+                    onSearchComplete={handleSearchResults}
+                />
             </div>
             <div className="nearby-filters">
                 <div className="distance-filter">
@@ -32,10 +50,32 @@ const NearbyPage = () => {
                 </div>
             </div>
             <div className="nearby-list">
-                {/* 임시로 "검색 중" 메시지 표시 */}
-                <div className="searching-message">
-                    주변 맛집을 검색하고 있습니다...
-                </div>
+                {isSearching ? (
+                    <div className="searching-message">
+                        "{searchKeyword}" 검색 중입니다...
+                    </div>
+                ) : searchResults.length > 0 ? (
+                    <div className="search-results">
+                        <h3>검색 결과 ({searchResults.length})</h3>
+                        <div className="result-list">
+                            {searchResults.map((place, index) => (
+                                <div key={index} className="result-item">
+                                    <h4>{place.place_name}</h4>
+                                    <p>{place.address_name}</p>
+                                    {place.phone && <p>연락처: {place.phone}</p>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : searchKeyword ? (
+                    <div className="no-results">
+                        검색 결과가 없습니다.
+                    </div>
+                ) : (
+                    <div className="searching-message">
+                        주변 맛집을 검색해보세요
+                    </div>
+                )}
             </div>
         </div>
     );

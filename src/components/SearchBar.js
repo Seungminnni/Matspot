@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import '../styles/SearchBar.css';
 
-const SearchBar = () => {
+const SearchBar = ({ onSearch }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const handleSearch = (e) => {
         e.preventDefault();
-        // 검색 로직 구현
-        console.log('Searching for:', searchTerm);
+        if (searchTerm.trim()) {
+            // 부모 컴포넌트로 검색어 전달
+            onSearch(searchTerm);
+            console.log('Searching for:', searchTerm);
+        }
     };
 
     return (
