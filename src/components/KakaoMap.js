@@ -30,13 +30,16 @@ function KakaoMap({ distance = 1000 }) {
     function createMap() {
       const container = document.getElementById('map');
       
-      // 거리에 따른 지도 레벨 설정
+      // 거리에 따른 지도 레벨 설정 (수정됨)
+      // 실제 표시되는 거리에 맞게 맵 레벨 조정
       let mapLevel = 3; // 기본값
-      if (distance <= 50) mapLevel = 1;
-      else if (distance <= 100) mapLevel = 2;
-      else if (distance <= 250) mapLevel = 3;
-      else if (distance <= 500) mapLevel = 4;
-      else if (distance <= 1000) mapLevel = 5;
+      
+      // 실제 표시되는 거리와 일치하도록 레벨 수정
+      if (distance <= 50) mapLevel = 3; // 50미터에 맞게 조정
+      else if (distance <= 100) mapLevel = 4; // 100미터에 맞게 조정
+      else if (distance <= 250) mapLevel = 5; // 250미터에 맞게 조정
+      else if (distance <= 500) mapLevel = 6; // 500미터에 맞게 조정
+      else if (distance <= 1000) mapLevel = 7; // 1km에 맞게 조정
       
       const options = {
         center: new window.kakao.maps.LatLng(37.5665, 126.9780), // 서울 시청
@@ -133,7 +136,7 @@ function KakaoMap({ distance = 1000 }) {
         id="map"
         style={{
           width: '100%',
-          height: '400px', // 명시적 높이 설정
+          height: '100%',
           borderRadius: '12px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         }}

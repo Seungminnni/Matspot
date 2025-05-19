@@ -2,6 +2,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 20px;
+    padding-bottom: 5rem;
 }
 
 .nearby-header {
@@ -98,6 +99,7 @@
 
 .nearby-list {
     margin-top: 2rem;
+    margin-bottom: 3rem;
 }
 
 .searching-message {
