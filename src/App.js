@@ -13,6 +13,8 @@ import NearbyPage from './components/NearbyPage';
 import Social from './pages/Social';
 import MyPage from './pages/MyPage';
 import Auth from './pages/Auth';
+import Login from './components/Auth/Login';
+import Register from './components/Auth/Register';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -46,6 +48,8 @@ function App() {
                 <Route path="/social" element={<Social />} />
                 <Route path="/mypage" element={<MyPage />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
               </Routes>
             </main>
             <Footer />

@@ -1,15 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../styles/Header.css';
 
 const Header = () => {
     const [showAccountMenu, setShowAccountMenu] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태를 false로 변경
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [user, setUser] = useState(null);
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        setShowAccountMenu(false);
+    // 컴포넌트 마운트 시 로그인 상태 확인
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetchUserData(token);
+        }
+    }, []);
+
+    // 사용자 정보 가져오기
+    const fetchUserData = async (token) => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/auth/me', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            if (response.data.success) {
+                setUser(response.data.data);
+                setIsLoggedIn(true);
+            }
+        } catch (error) {
+            console.error('사용자 정보 가져오기 실패:', error);
+            localStorage.removeItem('token');
+            setIsLoggedIn(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await axios.get('http://localhost:5000/api/auth/logout');
+            localStorage.removeItem('token');
+            setIsLoggedIn(false);
+            setUser(null);
+            setShowAccountMenu(false);
+            navigate('/');
+        } catch (error) {
+            console.error('로그아웃 실패:', error);
+        }
     };
 
     const handleMyPageClick = () => {
@@ -18,7 +56,11 @@ const Header = () => {
     };
 
     const handleAuthClick = (type) => {
-        navigate('/auth', { state: { isLogin: type === 'login' } });
+        if (type === 'login') {
+            navigate('/login');
+        } else {
+            navigate('/register');
+        }
         setShowAccountMenu(false);
     };
 
@@ -33,7 +75,7 @@ const Header = () => {
                         className="account-button"
                         onClick={() => setShowAccountMenu(!showAccountMenu)}
                     >
-                        {isLoggedIn ? '김맛집' : '로그인'}
+                        {isLoggedIn ? (user?.nickname || '사용자') : '로그인'}
                     </button>
                     {showAccountMenu && (
                         <div className="account-menu">
