@@ -1,6 +1,5 @@
-# Getting Started with Create React App 한국어 좀 ㅋㅋ
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Matspot 맛스팟
+웹 크롤링과 다양한 기법을 이용한 맛집 추천 웹앱
 
 ## Available Scripts
 
