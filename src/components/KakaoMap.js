@@ -8,6 +8,7 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
   const markersRef = useRef([]);
   const placesRef = useRef(null);
   const currentPositionRef = useRef(null);
+  const lastSearchRef = useRef(''); // track last searched keyword to prevent repeats
   
   // 마커들을 모두 제거하는 함수
   const removeAllMarkers = () => {
@@ -29,6 +30,8 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
     }
     
     // 기존 마커들 제거
+    // Clear previous error and markers for new search
+    setMapError(null);
     removeAllMarkers();
     
     // 검색 옵션 설정
@@ -84,22 +87,26 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
         // 검색 결과 콜백으로 전달
         onSearchComplete(results);
       } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
-        alert('검색 결과가 존재하지 않습니다.');
+        setMapError('검색 결과가 존재하지 않습니다.');
         onSearchComplete([]);
       } else if (status === window.kakao.maps.services.Status.ERROR) {
-        alert('검색 중 오류가 발생했습니다.');
+        setMapError('검색 중 오류가 발생했습니다.');
         onSearchComplete([]);
       }
     }, searchOptions);
   }, [distance, onSearchComplete]);
   
-  // 검색 키워드가 변경될 때 검색 실행
+  // 검색 키워드가 변경될 때 검색 실행 (한 번만 수행)
   useEffect(() => {
-    if (searchKeyword && mapRef.current) {
+    if (searchKeyword && mapRef.current && lastSearchRef.current !== searchKeyword) {
+      // 기록된 마지막 검색어와 다를 때만 검색 실행
+      lastSearchRef.current = searchKeyword;
+      setMapError(null);
       searchPlaces(searchKeyword);
     }
   }, [searchKeyword, searchPlaces]);
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // 이미 스크립트가 있으면 중복 추가 방지
     if (!window.kakao) {
@@ -124,17 +131,9 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
     function createMap() {
       const container = document.getElementById('map');
       
-      // 거리에 따른 지도 레벨 설정 (수정됨)
-      // 실제 표시되는 거리에 맞게 맵 레벨 조정
-      let mapLevel = 3; // 기본값
-      
-      // 실제 표시되는 거리와 일치하도록 레벨 수정
-      if (distance <= 50) mapLevel = 3; // 50미터에 맞게 조정
-      else if (distance <= 100) mapLevel = 4; // 100미터에 맞게 조정
-      else if (distance <= 250) mapLevel = 5; // 250미터에 맞게 조정
-      else if (distance <= 500) mapLevel = 6; // 500미터에 맞게 조정
-      else if (distance <= 1000) mapLevel = 7; // 1km에 맞게 조정
-      
+      // 초기 지도 레벨 설정 (기본값: 1km 범위)
+      const mapLevel = 7; // 1km에 대응하는 레벨
+
       const options = {
         center: new window.kakao.maps.LatLng(37.5665, 126.9780), // 서울 시청
         level: mapLevel,
@@ -179,9 +178,10 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
             markerRef.current = marker;
             
             // 검색어가 있다면 검색 실행
-            if (searchKeyword) {
-              searchPlaces(searchKeyword);
-            }
+            // 검색어가 있다면 검색 실행
+            // 검색은 useEffect에서 searchKeyword 변경 시 처리됩니다
+            
+            // 마커 초기화 완료 후 추가 작업이 필요하다면 이곳에 작성
           },
           (error) => {
             console.error('위치 정보를 가져오는데 실패했습니다:', error);
@@ -227,7 +227,21 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
       }
       removeAllMarkers();
     };
-  }, [distance, searchKeyword, searchPlaces]);
+  }, []);
+
+  // 거리 변경 시 지도 레벨 업데이트
+  useEffect(() => {
+    if (mapRef.current && window.kakao && window.kakao.maps) {
+      // calculate map level based on distance
+      let level = 3;
+      if (distance <= 50) level = 3;
+      else if (distance <= 100) level = 4;
+      else if (distance <= 250) level = 5;
+      else if (distance <= 500) level = 6;
+      else if (distance <= 1000) level = 7;
+      mapRef.current.setLevel(level);
+    }
+  }, [distance]);
 
   return (
     <div className="map-container">
