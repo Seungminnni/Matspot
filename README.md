@@ -1,69 +1,114 @@
-# Matspot 맛스팟
-웹 크롤링과 다양한 기법을 이용한 맛집 추천 웹앱
+# 🍽️ Matspot (맛스팟)
 
-## Available Scripts
+![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![React](https://img.shields.io/badge/React-19.1.0-61DAFB.svg?logo=react)
+![Status](https://img.shields.io/badge/status-개발%20중-yellow.svg)
 
-In the project directory, you can run:
+**맛스팟**은 현대적인 UI 디자인과 최신 웹 기술로 개발된 맛집 추천 웹 애플리케이션입니다. 사용자 위치 기반의 맛집 검색부터 소셜 기능까지 다양한 서비스를 제공합니다.
 
-### `npm start`
+## 📋 목차
+- [프로젝트 소개](#프로젝트-소개)
+- [주요 기능](#주요-기능)
+- [기술 스택](#기술-스택)
+- [프로젝트 구조](#프로젝트-구조)
+- [시작하기](#시작하기)
+- [기여하기](#기여하기)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🍳 프로젝트 소개
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+맛스팟은 웹 크롤링과 다양한 기법을 활용하여 사용자에게 최적화된 맛집 정보를 제공합니다. 카테고리별 필터링, 키워드 검색, 위치 기반 서비스를 통해 사용자가 원하는 맛집을 쉽게 찾을 수 있도록 도와줍니다.
 
-### `npm test`
+![Matspot Preview](https://via.placeholder.com/800x400?text=Matspot+Preview)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## ✨ 주요 기능
 
-### `npm run build`
+### 🔍 맛집 검색 및 필터링
+- **카테고리 필터링**: 음식 종류별로 맛집 검색
+- **키워드 기반 검색**: 특정 메뉴나 가게 이름으로 검색
+- **위치 기반 서비스**: 현재 위치 주변의 맛집 추천
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 🗺️ 지도 통합
+- **카카오맵 연동**: 직관적인 맛집 위치 확인
+- **주변 맛집 탐색**: 지도 상에서 주변 맛집 정보 제공
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 👥 소셜 기능
+- **리뷰 시스템**: 사용자 리뷰 작성 및 조회
+- **채팅 기능**: 다른 사용자와의 실시간 소통
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 👤 사용자 경험
+- **개인화된 추천**: 사용자 취향 기반 맛집 추천
+- **마이페이지**: 개인 설정 및 활동 관리
 
-### `npm run eject`
+## 🛠 기술 스택
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 프론트엔드
+- **React 19.1.0**: 사용자 인터페이스 구축
+- **React Router 7.6.0**: 클라이언트 사이드 라우팅
+- **React Icons 5.5.0**: 다양한 아이콘 활용
+- **Kakao Map API**: 위치 기반 서비스 구현
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 개발 도구
+- **Create React App**: 프로젝트 구성 및 빌드
+- **Jest/Testing Library**: 코드 테스팅
+- **ESLint/Prettier**: 코드 품질 관리
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 📂 프로젝트 구조
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```
+src/
+├── components/       # 재사용 가능한 컴포넌트
+│   ├── Banner.js     # 메인 배너 컴포넌트
+│   ├── CategoryFilter.js   # 카테고리 필터 컴포넌트
+│   ├── ChatRoom.js   # 채팅방 컴포넌트
+│   ├── KakaoMap.js   # 카카오맵 연동 컴포넌트
+│   ├── RestaurantList.js  # 맛집 목록 컴포넌트
+│   └── ...
+├── pages/            # 페이지 컴포넌트
+│   ├── Auth.js       # 인증 페이지
+│   ├── MyPage.js     # 마이페이지
+│   ├── Nearby.js     # 주변 맛집 페이지
+│   └── Social.js     # 소셜 기능 페이지
+├── styles/           # CSS 스타일 파일
+├── App.js            # 앱 진입점
+└── index.js          # React 렌더링 진입점
+```
 
-## Learn More
+## 🚀 시작하기
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 사전 요구사항
+- Node.js 16.0.0 이상
+- npm 또는 yarn
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 설치 방법
 
-### Code Splitting
+1. 저장소 클론
+```bash
+git clone https://github.com/username/matspot.git
+cd matspot
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+2. 의존성 설치
+```bash
+npm install
+# 또는
+yarn install
+```
 
-### Analyzing the Bundle Size
+3. 개발 서버 실행
+```bash
+npm start
+# 또는
+yarn start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+4. 브라우저에서 [http://localhost:3000](http://localhost:3000) 접속
 
-### Making a Progressive Web App
+## 📝 기여하기
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+1. 이 저장소를 포크합니다
+2. 새로운 기능 브랜치를 생성합니다 (`git checkout -b feature/amazing-feature`)
+3. 변경사항을 커밋합니다 (`git commit -m '새로운 기능 추가'`)
+4. 브랜치에 푸시합니다 (`git push origin feature/amazing-feature`)
+5. Pull Request를 생성합니다
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+> **참고**: 이 프로젝트는 현재 개발 중이며 라이선스는 추후 결정될 예정입니다. 외부 API(예: 카카오맵 API)를 사용할 경우 해당 서비스의 이용약관을 준수해야 합니다.
