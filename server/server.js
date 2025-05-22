@@ -1,11 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const initializeDatabase = require('./initDb');
 
 // 환경 변수 로드
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // 데이터베이스 초기화
 initializeDatabase().catch(console.error);
