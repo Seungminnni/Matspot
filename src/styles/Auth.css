@@ -48,6 +48,17 @@
     border-color: #ff6b6b;
 }
 
+.error-message {
+    background-color: #ffe0e0;
+    color: #e74c3c;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid #e74c3c50;
+}
+
 .submit-button {
     width: 100%;
     padding: 12px;
@@ -58,6 +69,12 @@
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-button:disabled {
+    background: #f0a8a8;
+    cursor: not-allowed;
     transition: background 0.2s;
 }
 
