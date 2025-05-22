@@ -1,38 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Auth.css';
+import { loginUser, registerUser } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
 const Auth = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { updateAuthState } = useAuth();
     const [isLogin, setIsLogin] = useState(location.state?.isLogin ?? true);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        name: '',
+        username: '',
         passwordConfirm: ''
     });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         // location.state가 변경될 때 로그인/회원가입 모드 업데이트
         setIsLogin(location.state?.isLogin ?? true);
-    }, [location.state]);
-
-    const handleSubmit = (e) => {
+    }, [location.state]);    const handleSubmit = async (e) => {
         e.preventDefault();
-        // 실제 구현시에는 서버로 데이터를 전송하고 인증을 처리합니다.
-        if (isLogin) {
-            // 로그인 처리
-            console.log('로그인:', formData);
-            navigate('/');
-        } else {
-            // 회원가입 처리
-            if (formData.password !== formData.passwordConfirm) {
-                alert('비밀번호가 일치하지 않습니다.');
-                return;
+        setError('');
+        setLoading(true);
+        
+        try {
+            if (isLogin) {
+                // 로그인 처리
+                const loginData = {
+                    email: formData.email,
+                    password: formData.password
+                };
+                
+                const response = await loginUser(loginData);
+                updateAuthState(response.user);
+                navigate('/');
+            } else {
+                // 회원가입 처리
+                if (formData.password !== formData.passwordConfirm) {
+                    setError('비밀번호가 일치하지 않습니다.');
+                    setLoading(false);
+                    return;
+                }
+                
+                const registerData = {
+                    username: formData.username,
+                    email: formData.email,
+                    password: formData.password
+                };
+                
+                await registerUser(registerData);
+                // 회원가입 성공 후 로그인 화면으로 전환
+                setIsLogin(true);
+                setFormData(prev => ({
+                    ...prev,
+                    password: '',
+                    passwordConfirm: ''
+                }));
             }
-            console.log('회원가입:', formData);
-            setIsLogin(true);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -55,12 +86,11 @@ const Auth = () => {
                 <h2>{isLogin ? '로그인' : '회원가입'}</h2>
                 <form onSubmit={handleSubmit}>
                     {!isLogin && (
-                        <div className="form-group">
-                            <label>이름</label>
+                        <div className="form-group">                            <label>이름</label>
                             <input
                                 type="text"
-                                name="name"
-                                value={formData.name}
+                                name="username"
+                                value={formData.username}
                                 onChange={handleChange}
                                 placeholder="이름을 입력하세요"
                                 required
@@ -101,9 +131,10 @@ const Auth = () => {
                                 required
                             />
                         </div>
-                    )}
-                    <button type="submit" className="submit-button">
-                        {isLogin ? '로그인' : '회원가입'}
+                    )}                    {error && <div className="error-message">{error}</div>}
+                    
+                    <button type="submit" className="submit-button" disabled={loading}>
+                        {loading ? '처리 중...' : isLogin ? '로그인' : '회원가입'}
                     </button>
                 </form>
                 <div className="auth-footer">

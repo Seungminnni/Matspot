@@ -1,10 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/MyPage.css';
+import { useAuth } from '../context/AuthContext';
 
 const MyPage = () => {
     const [activeSection, setActiveSection] = useState('profile');
+    const { user, loading } = useAuth();
+    const navigate = useNavigate();
     
-    // 임시 사용자 데이터
+    // 인증되지 않은 사용자는 로그인 페이지로 리디렉션
+    useEffect(() => {
+        if (!loading && !user) {
+            navigate('/auth', { state: { isLogin: true } });
+        }
+    }, [user, loading, navigate]);
+    
+    // 로딩 중일 때 표시
+    if (loading) {
+        return <div className="loading">로딩 중...</div>;
+    }
+    
+    // 인증되지 않은 사용자가 보이지 않아야 하므로 null 반환
+    if (!user) {
+        return null;
+    }
+    
+    // 임시 사용자 데이터 (실제로는 API에서 가져온 정보를 사용)
     const userData = {
         name: '김맛집',
         email: 'foodie@example.com',

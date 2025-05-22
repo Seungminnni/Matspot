@@ -47,6 +47,12 @@
 - **React Icons 5.5.0**: 다양한 아이콘 활용
 - **Kakao Map API**: 위치 기반 서비스 구현
 
+### 백엔드
+- **Express 5.1.0**: RESTful API 서버
+- **MySQL 8.0**: 데이터베이스
+- **JWT**: 사용자 인증
+- **Bcrypt**: 비밀번호 암호화
+
 ### 개발 도구
 - **Create React App**: 프로젝트 구성 및 빌드
 - **Jest/Testing Library**: 코드 테스팅
@@ -94,11 +100,47 @@ npm install
 yarn install
 ```
 
-3. 개발 서버 실행
+3. MySQL 설정
+   - MySQL 서버 설치 (필요한 경우):
+     - Mac: `brew install mysql`
+     - Windows: [MySQL 공식 사이트](https://dev.mysql.com/downloads/installer/)에서 다운로드
+     - Linux: `sudo apt install mysql-server`
+   
+   - MySQL 서버 시작:
+     - Mac/Linux: `sudo service mysql start` 또는 `sudo systemctl start mysql`
+     - Windows: Windows 서비스에서 MySQL 시작
+
+   - 데이터베이스 설정:
+     ```bash
+     mysql -u root -p
+     ```
+     ```sql
+     CREATE DATABASE matspot_db;
+     CREATE USER 'matspot_user'@'localhost' IDENTIFIED BY 'your_password';
+     GRANT ALL PRIVILEGES ON matspot_db.* TO 'matspot_user'@'localhost';
+     FLUSH PRIVILEGES;
+     EXIT;
+     ```
+
+4. 환경 변수 설정
+   - `server/.env` 파일을 열고 MySQL 정보를 업데이트
+   ```
+   DB_HOST=localhost
+   DB_USER=matspot_user
+   DB_PASSWORD=your_password
+   DB_NAME=matspot_db
+   JWT_SECRET=your_secret_key
+   PORT=5000
+   ```
+
+5. 서버와 클라이언트 실행
 ```bash
-npm start
-# 또는
-yarn start
+# 동시에 서버와 클라이언트 실행
+npm run dev
+
+# 또는 각각 실행
+npm start         # 클라이언트 실행
+npm run server    # 서버만 실행
 ```
 
 4. 브라우저에서 [http://localhost:3000](http://localhost:3000) 접속

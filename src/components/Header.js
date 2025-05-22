@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/Header.css';
+import { useAuth } from '../context/AuthContext';
+import { logoutUser } from '../services/authService';
 
 const Header = () => {
     const [showAccountMenu, setShowAccountMenu] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태를 false로 변경
+    const { user, clearAuthState } = useAuth();
+    const isLoggedIn = !!user;
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        setIsLoggedIn(false);
+        logoutUser();
+        clearAuthState();
         setShowAccountMenu(false);
+        navigate('/');
     };
 
     const handleMyPageClick = () => {
@@ -32,8 +37,7 @@ const Header = () => {
                     <button 
                         className="account-button"
                         onClick={() => setShowAccountMenu(!showAccountMenu)}
-                    >
-                        {isLoggedIn ? '김맛집' : '로그인'}
+                    >                        {isLoggedIn ? user.username : '로그인'}
                     </button>
                     {showAccountMenu && (
                         <div className="account-menu">

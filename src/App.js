@@ -13,6 +13,7 @@ import NearbyPage from './components/NearbyPage';
 import Social from './pages/Social';
 import MyPage from './pages/MyPage';
 import Auth from './pages/Auth';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -33,25 +34,27 @@ function App() {
 
   return (
     <Router>
-      <div className="App">
-        {showSplash ? (
-          <SplashScreen onComplete={handleSplashComplete} />
-        ) : (
-          <>
-            <Header />
-            <main className="main-content">
-              <Routes>
-                <Route path="/" element={<MainContent />} />
-                <Route path="/nearby" element={<NearbyPage />} />
-                <Route path="/social" element={<Social />} />
-                <Route path="/mypage" element={<MyPage />} />
-                <Route path="/auth" element={<Auth />} />
-              </Routes>
-            </main>
-            <Footer />
-          </>
-        )}
-      </div>
+      <AuthProvider>
+        <div className="App">
+          {showSplash ? (
+            <SplashScreen onComplete={handleSplashComplete} />
+          ) : (
+            <>
+              <Header />
+              <main className="main-content">
+                <Routes>
+                  <Route path="/" element={<MainContent />} />
+                  <Route path="/nearby" element={<NearbyPage />} />
+                  <Route path="/social" element={<Social />} />
+                  <Route path="/mypage" element={<MyPage />} />
+                  <Route path="/auth" element={<Auth />} />
+                </Routes>
+              </main>
+              <Footer />
+            </>
+          )}
+        </div>
+      </AuthProvider>
     </Router>
   );
 }
