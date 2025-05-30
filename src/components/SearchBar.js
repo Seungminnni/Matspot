@@ -4,12 +4,14 @@ import '../styles/SearchBar.css';
 
 const SearchBar = ({ onSearch }) => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [hasSearched, setHasSearched] = useState(false);
 
     const handleSearch = (e) => {
         e.preventDefault();
         if (searchTerm.trim()) {
             // 부모 컴포넌트로 검색어 전달
             onSearch(searchTerm);
+            setHasSearched(true);
             console.log('Searching for:', searchTerm);
         }
     };
@@ -24,15 +26,18 @@ const SearchBar = ({ onSearch }) => {
                         className="search-input"
                         placeholder="맛집을 검색해보세요"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setHasSearched(false);
+                        }}
                     />
                 </div>
                 <button type="submit" className="search-button">
-                    검색
+                    {hasSearched ? '재검색' : '검색'}
                 </button>
             </form>
         </div>
     );
 };
 
-export default SearchBar; 
+export default SearchBar;
