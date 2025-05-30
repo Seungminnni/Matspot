@@ -20,6 +20,8 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
   
   // 장소 검색 함수를 useCallback으로 메모이제이션
   const searchPlaces = useCallback((keyword) => {
+    console.log('검색 시작:', { keyword, distance });
+    
     if (!window.kakao || !window.kakao.maps || !mapRef.current) {
       console.error('카카오맵 API가 로드되지 않았습니다.');
       return;
@@ -37,13 +39,15 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
     // 검색 옵션 설정
     const searchOptions = {
       location: currentPositionRef.current,
-      radius: distance,
-      // 음식점 카테고리로 필터링 (FD6: 음식점)
+      radius: 5000,  // 검색 반경을 5km로 확장
+      // 음식점 카테고리로 필터링 (FD6: 음식점) - 필요시 주석 처리
       category_group_code: 'FD6'
     };
     
     // 장소 검색 실행
     placesRef.current.keywordSearch(keyword, (data, status) => {
+      console.log('카카오맵 검색 결과:', { status, data, keyword });
+      
       if (status === window.kakao.maps.services.Status.OK) {
         const bounds = new window.kakao.maps.LatLngBounds();
         const results = [];
@@ -87,9 +91,11 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
         // 검색 결과 콜백으로 전달
         onSearchComplete(results);
       } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
-        setMapError('검색 결과가 존재하지 않습니다.');
+        console.warn('검색 결과 없음:', { keyword, location: currentPositionRef.current, radius: 5000 });
+        setMapError(`'${keyword}' 검색 결과가 5km 내에 존재하지 않습니다.`);
         onSearchComplete([]);
       } else if (status === window.kakao.maps.services.Status.ERROR) {
+        console.error('카카오맵 검색 오류:', status);
         setMapError('검색 중 오류가 발생했습니다.');
         onSearchComplete([]);
       }
@@ -98,11 +104,15 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
   
   // 검색 키워드가 변경될 때 검색 실행 (한 번만 수행)
   useEffect(() => {
-    if (searchKeyword && mapRef.current && lastSearchRef.current !== searchKeyword) {
+    if (mapRef.current && lastSearchRef.current !== searchKeyword) {
       // 기록된 마지막 검색어와 다를 때만 검색 실행
       lastSearchRef.current = searchKeyword;
       setMapError(null);
-      searchPlaces(searchKeyword);
+      
+      // 검색어가 비어있으면 기본값으로 '맛집' 사용
+      const effectiveKeyword = searchKeyword || '맛집';
+      console.log('검색 키워드 변경:', { effectiveKeyword, original: searchKeyword });
+      searchPlaces(effectiveKeyword);
     }
   }, [searchKeyword, searchPlaces]);
   
