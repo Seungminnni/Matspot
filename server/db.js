@@ -1,21 +1,44 @@
-const mysql = require('mysql2');
-const dotenv = require('dotenv');
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+// DB 파일 경로 지정
+const dbPath = path.resolve(__dirname, 'matspot.db');
 
-// MySQL 연결 풀 생성
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+// SQLite DB 연결
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('SQLite 연결 오류:', err);
+  } else {
+    console.log('SQLite 데이터베이스 연결 성공:', dbPath);
+  }
 });
 
-// promise wrapper를 사용하여 async/await 사용 가능하게 함
-const promisePool = pool.promise();
+// Promise 기반 쿼리 함수
+function run(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      if (err) reject(err);
+      else resolve(this);
+    });
+  });
+}
 
-module.exports = promisePool;
+function get(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+}
+
+function all(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+}
+
+module.exports = { db, run, get, all };

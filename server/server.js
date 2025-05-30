@@ -14,8 +14,23 @@ initializeDatabase().catch(console.error);
 // Express 앱 생성
 const app = express();
 
-// 미들웨어 설정
-app.use(cors());
+// CORS 패키지 미들웨어 사용 - 가장 단순한 방법
+app.use(cors({
+  origin: true, // 모든 출처 허용 옵션. true 설정은 요청 도메인과 동일한 값으로 설정됨
+  credentials: true, // 크로스 도메인 요청에 쿠키 포함
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+
+// 추가 보안 설정 - preflight 요청을 위한 OPTIONS 메서드 처리
+app.options('*', cors());
+
+// 요청 로깅
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} [${req.method}] ${req.url}`);
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

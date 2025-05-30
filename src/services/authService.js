@@ -3,10 +3,12 @@ const API_BASE_URL = 'http://localhost:5000/api';
 // 회원가입 요청
 export const registerUser = async (userData) => {
   try {
+    console.log('회원가입 요청 데이터:', userData);
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(userData),
     });
@@ -27,10 +29,12 @@ export const registerUser = async (userData) => {
 // 로그인 요청
 export const loginUser = async (credentials) => {
   try {
+    console.log('로그인 요청 데이터:', credentials);
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(credentials),
     });
