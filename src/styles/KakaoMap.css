@@ -29,7 +29,25 @@
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 2;
-    text-align: center;
-    color: #e74c3c;
-    font-weight: 500;
+}
+
+.map-search-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 2;
+    padding: 8px 16px;
+    background-color: #fa4a0c;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.map-search-button:hover {
+    background-color: #e44607;
 }
