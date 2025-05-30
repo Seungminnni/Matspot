@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import '../styles/KakaoMap.css';
 
-function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () => {} }) {
+function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {} }) {
   const [mapError, setMapError] = useState(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -100,10 +100,9 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
           bounds.extend(position);
           results.push(place);
         });
-        
         // 검색 결과 바운드로 지도 이동
         mapRef.current.setBounds(bounds);
-        
+        mapRef.current.setLevel(5); // 검색 후 지도 축척을 250m로 고정
         // 검색 결과 콜백으로 전달
         onSearchComplete(results);
       } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
@@ -122,19 +121,19 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
   
   // 검색 키워드가 변경될 때 검색 실행 (한 번만 수행)
   useEffect(() => {
-    if (mapRef.current && lastSearchRef.current !== searchKeyword) {
-      // 기록된 마지막 검색어와 다를 때만 검색 실행
-      lastSearchRef.current = searchKeyword;
+    // 무한루프 방지: searchKeyword가 비어있지 않고, searchCount가 0보다 클 때만 검색
+    if (
+      mapRef.current &&
+      searchKeyword &&
+      searchCount > 0 &&
+      lastSearchRef.current !== `${searchKeyword}_${searchCount}`
+    ) {
       setMapError(null);
-      
-      // 검색어가 비어있으면 기본값으로 '맛집' 사용
       const effectiveKeyword = searchKeyword || '맛집';
-      console.log('검색 키워드 변경:', { effectiveKeyword, original: searchKeyword });
-      
-      // 현재 지도 중심 좌표 기준으로 검색 (useCurrentPosition = false)
       searchPlaces(effectiveKeyword, false);
+      lastSearchRef.current = `${searchKeyword}_${searchCount}`;
     }
-  }, [searchKeyword, searchPlaces]);
+  }, [searchKeyword, searchCount, searchPlaces]);
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -204,6 +203,7 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
             
             // 현재 위치로 지도 중심 이동
             map.setCenter(currentPosition);
+            map.setLevel(5); // 250m 축척으로 지도 레벨 변경
             
             // 지도 중심 좌표 업데이트
             centerRef.current = currentPosition;
