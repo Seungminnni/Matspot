@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 // 사용자 등록
 exports.register = async (req, res) => {
   try {
+    console.log('회원가입 요청 본문:', req.body); // 요청 본문 로깅
     const { username, email, password } = req.body;
     
     // 이메일 중복 확인
@@ -28,6 +29,7 @@ exports.register = async (req, res) => {
 // 로그인
 exports.login = async (req, res) => {
   try {
+    console.log('로그인 요청 본문:', req.body); // 요청 본문 로깅
     const { email, password } = req.body;
     
     // 사용자 찾기
@@ -45,7 +47,7 @@ exports.login = async (req, res) => {
     // JWT 토큰 생성
     const token = jwt.sign(
       { id: user.id, email: user.email, username: user.username },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'matspot-default-secret-key',
       { expiresIn: '24h' }
     );
     
