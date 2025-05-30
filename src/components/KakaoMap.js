@@ -106,6 +106,13 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
           mapRef.current.setBounds(bounds);
         }
         mapRef.current.setLevel(5); // 검색 후 지도 축척을 250m로 고정
+        if (useCurrentPosition && currentPositionRef.current) {
+          mapRef.current.setCenter(currentPositionRef.current);
+          mapRef.current.setLevel(5);
+          setTimeout(() => {
+            mapRef.current.setCenter(currentPositionRef.current);
+          }, 0);
+        }
         // 검색 결과 콜백으로 전달
         onSearchComplete(results);
       } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
