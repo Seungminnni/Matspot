@@ -41,7 +41,7 @@ function KakaoMap({ distance = 1000, searchKeyword = '', onSearchComplete = () =
       location: currentPositionRef.current,
       radius: 5000,  // 검색 반경을 5km로 확장
       // 음식점 카테고리로 필터링 (FD6: 음식점) - 필요시 주석 처리
-      category_group_code: 'FD6'
+      // category_group_code: 'FD6'
     };
     
     // 장소 검색 실행
