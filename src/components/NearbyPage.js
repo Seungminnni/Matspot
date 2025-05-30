@@ -6,6 +6,7 @@ import '../styles/NearbyPage.css';
 const NearbyPage = () => {
     const [distance, setDistance] = useState(1000);
     const [searchKeyword, setSearchKeyword] = useState('');
+    const [searchCount, setSearchCount] = useState(0);
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     
@@ -15,6 +16,7 @@ const NearbyPage = () => {
     
     const handleSearch = (keyword) => {
         setSearchKeyword(keyword);
+        setSearchCount(c => c + 1);
         setIsSearching(true);
     };
     
@@ -35,6 +37,7 @@ const NearbyPage = () => {
                 <KakaoMap 
                     distance={distance} 
                     searchKeyword={searchKeyword} 
+                    searchCount={searchCount}
                     onSearchComplete={handleSearchResults}
                 />
             </div>
@@ -81,4 +84,4 @@ const NearbyPage = () => {
     );
 };
 
-export default NearbyPage; 
+export default NearbyPage;
