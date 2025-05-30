@@ -101,7 +101,10 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
           results.push(place);
         });
         // 검색 결과 바운드로 지도 이동
-        mapRef.current.setBounds(bounds);
+        if (useCurrentPosition) {
+          // 현재 위치에서 검색 버튼을 눌렀을 때만 지도 중심 이동
+          mapRef.current.setBounds(bounds);
+        }
         mapRef.current.setLevel(5); // 검색 후 지도 축척을 250m로 고정
         // 검색 결과 콜백으로 전달
         onSearchComplete(results);
