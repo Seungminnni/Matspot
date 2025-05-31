@@ -21,3 +21,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Chrome binary files (too large for GitHub)
+/crawling/chrome-win64/
+/crawling/chromedriver-win64/
+
