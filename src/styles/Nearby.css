@@ -10,10 +10,13 @@
     background: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     z-index: 1000;
+    position: sticky;
+    top: 0;
 }
 
 .button-group {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 1rem;
     margin-bottom: 0.5rem;
@@ -32,6 +35,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .sns-search-btn:hover {
@@ -50,7 +54,8 @@
 }
 
 .loading-spinner {
-    animation: spin 1s linear infinite;
+    animation: spin 1.5s linear infinite;
+    display: inline-block;
 }
 
 @keyframes spin {
@@ -66,24 +71,29 @@
     background: #e3f2fd;
     border-radius: 15px;
     border-left: 4px solid #2196f3;
+    flex-grow: 1;
+    max-width: 400px;
 }
 
 .stats-text {
     font-size: 0.9rem;
     color: #1976d2;
+    flex-grow: 1;
 }
 
 .details-btn {
-    background: none;
+    background: #2196f3;
     border: none;
     cursor: pointer;
-    font-size: 1.1rem;
-    padding: 0.25rem;
-    border-radius: 4px;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    color: white;
+    transition: background 0.2s ease;
 }
 
 .details-btn:hover {
-    background: rgba(33, 150, 243, 0.1);
+    background: #1976d2;
 }
 
 .error-message {
@@ -93,6 +103,7 @@
     border-radius: 4px;
     color: #c62828;
     font-size: 0.9rem;
+    margin-top: 0.5rem;
 }
 
 .loading-status {
@@ -121,25 +132,52 @@
     100% { transform: translateX(100%); }
 }
 
+.api-status {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.api-status.checking {
+    background-color: #fff9c4;
+    color: #fbc02d;
+}
+
+.api-status.online {
+    background-color: #e8f5e9;
+    color: #43a047;
+}
+
+.api-status.offline {
+    background-color: #ffebee;
+    color: #e53935;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.retry-btn {
+    background-color: #e53935;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.retry-btn:hover {
+    background-color: #c62828;
+}
+
 .sns-mode-banner {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     padding: 0.75rem;
     text-align: center;
-}
-
-.banner-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.banner-icon {
-    font-size: 1.2rem;
-}
-
-.map-container {
-    flex: 1;
-    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }

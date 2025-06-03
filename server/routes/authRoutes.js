@@ -3,6 +3,11 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 
+// 서버 상태 확인 라우트
+router.get('/status', (req, res) => {
+  res.status(200).json({ status: 'ok', message: '서버가 정상 작동 중입니다.' });
+});
+
 // 회원가입 라우트
 router.post('/register', authController.register);
 

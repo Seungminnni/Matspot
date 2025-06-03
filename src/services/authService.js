@@ -1,5 +1,21 @@
 const API_BASE_URL = 'http://localhost:5000/api';
 
+// 서버 상태 확인 함수 추가
+export const checkServerStatus = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/status`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('Server check error:', error);
+    return false;
+  }
+};
+
 // 회원가입 요청
 export const registerUser = async (userData) => {
   try {

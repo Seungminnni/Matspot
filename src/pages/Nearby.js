@@ -9,8 +9,94 @@ const Nearby = () => {
     const [showSnsMode, setShowSnsMode] = useState(false);
     const [currentMapResults, setCurrentMapResults] = useState([]);
     const [error, setError] = useState('');
+    const [pythonApiStatus, setPythonApiStatus] = useState(null); // 'online', 'offline', 'checking'
+    const [backendApiStatus, setBackendApiStatus] = useState(null); // 'online', 'offline', 'checking'
     
     const kakaoMapRef = useRef(null);
+    const retryCountRef = useRef(0);
+    const maxRetryCount = 3;
+
+    // Python API 서버 상태 확인
+    const checkPythonApiStatus = async () => {
+        setPythonApiStatus('checking');
+        try {
+            const response = await fetch('http://localhost:5001/api/health', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                // 3초 타임아웃 설정
+                signal: AbortSignal.timeout(3000)
+            });
+            
+            if (response.ok) {
+                console.log('Python API 서버 연결 성공');
+                setPythonApiStatus('online');
+                return true;
+            } else {
+                throw new Error(`상태 코드: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Python API 서버 연결 실패:', error);
+            setPythonApiStatus('offline');
+            return false;
+        }
+    };
+    
+    // 백엔드 API 서버 상태 확인
+    const checkBackendApiStatus = async () => {
+        setBackendApiStatus('checking');
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/status', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                // 3초 타임아웃 설정
+                signal: AbortSignal.timeout(3000)
+            });
+            
+            if (response.ok) {
+                console.log('백엔드 API 서버 연결 성공');
+                setBackendApiStatus('online');
+                return true;
+            } else {
+                throw new Error(`상태 코드: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('백엔드 API 서버 연결 실패:', error);
+            setBackendApiStatus('offline');
+            return false;
+        }
+    };
+    
+    // 컴포넌트 마운트 시 서버 상태 확인
+    useEffect(() => {
+        checkPythonApiStatus();
+        checkBackendApiStatus();
+        
+        // 10초마다 서버 상태 확인
+        const intervalId = setInterval(() => {
+            if (pythonApiStatus !== 'online') {
+                checkPythonApiStatus();
+            }
+            if (backendApiStatus !== 'online') {
+                checkBackendApiStatus();
+            }
+        }, 10000);
+        
+        return () => clearInterval(intervalId);
+    }, []);
+    
+    // Python API 상태가 변경될 때 실행
+    useEffect(() => {
+        if (pythonApiStatus === 'online') {
+            // 서버가 온라인이면 에러 메시지 제거
+            if (error.includes('Python API 서버 연결에 실패')) {
+                setError('');
+            }
+        }
+    }, [pythonApiStatus, error]);
 
     // 카카오맵에서 현재 검색 결과 가져오기
     const getCurrentMapResults = () => {
@@ -27,9 +113,7 @@ const Nearby = () => {
         }
         
         return [];
-    };
-
-    // SNS 맛집 매칭 검색
+    };    // SNS 맛집 매칭 검색
     const handleSnsSearch = async () => {
         setIsLoading(true);
         setError('');
@@ -56,52 +140,74 @@ const Nearby = () => {
                 첫번째맛집: mapResults[0]?.place_name
             });
 
-            const response = await fetch('/api/restaurants/smart-match', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    mapRestaurants: mapResults,
-                    searchArea: {
-                        center: {
-                            lat: mapCenter?.getLat(),
-                            lng: mapCenter?.getLng()
-                        },
-                        bounds: mapBounds ? {
-                            sw: {
-                                lat: mapBounds.getSouthWest()?.getLat(),
-                                lng: mapBounds.getSouthWest()?.getLng()
-                            },
-                            ne: {
-                                lat: mapBounds.getNorthEast()?.getLat(),
-                                lng: mapBounds.getNorthEast()?.getLng()
-                            }
-                        } : null
+            // 직접 Python 크롤링 API 호출
+            try {
+                const response = await fetch('http://localhost:5001/api/sns-restaurants?limit=10', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
                     }
-                })
-            });
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP ${response.status}`);
-            }
+                if (!response.ok) {
+                    throw new Error(`HTTP 에러: ${response.status}`);
+                }
 
-            const data = await response.json();
-            
-            if (data.success) {
-                setSnsRestaurants(data.matched);
-                setMatchStats(data.stats);
+                const data = await response.json();
+                console.log('Python API 응답:', data);
+                
+                if (data && Array.isArray(data)) {
+                    // 받아온 SNS 맛집 데이터를 지도 검색 결과와 매칭
+                    const matched = matchRestaurantsWithMapResults(data, mapResults);
+                    
+                    setSnsRestaurants(matched);
+                    setMatchStats({
+                        total: mapResults.length,
+                        matched: matched.length,
+                        matchRate: Math.round((matched.length / mapResults.length) * 100)
+                    });
+                    setShowSnsMode(true);
+                    
+                    // 성공 메시지
+                    if (matched.length > 0) {
+                        console.log(`🎉 ${matched.length}개의 SNS 인기 맛집을 찾았습니다!`);
+                    } else {
+                        setError('이 지역에서 SNS에서 언급된 맛집을 찾지 못했습니다. 다른 지역을 검색해보세요.');
+                    }
+                } else {
+                    throw new Error('API 응답이 올바른 형식이 아닙니다');
+                }
+            } catch (fetchError) {
+                console.error('Python API 요청 실패:', fetchError);
+                
+                // 대체 로직: 로컬 더미 데이터로 테스트 가능하게 함
+                const dummyMatched = mapResults.slice(0, 3).map((rest, index) => ({
+                    map_info: rest,
+                    sns_info: {
+                        id: index + 1,
+                        name: rest.place_name,
+                        address: rest.address_name,
+                        sns_mentions: Math.floor(Math.random() * 100) + 50,
+                        rating: (Math.random() * 2 + 3).toFixed(1),
+                        review_count: Math.floor(Math.random() * 50) + 20,
+                        tags: ['맛집', '인기', '추천'],
+                        description: '인스타그램에서 인기 있는 맛집',
+                        source: 'fallback'
+                    },
+                    match_score: (Math.random() * 0.3 + 0.7).toFixed(2),
+                    match_type: 'fallback'
+                }));
+                
+                setSnsRestaurants(dummyMatched);
+                setMatchStats({
+                    total: mapResults.length,
+                    matched: dummyMatched.length,
+                    matchRate: Math.round((dummyMatched.length / mapResults.length) * 100)
+                });
                 setShowSnsMode(true);
                 
-                // 성공 메시지
-                if (data.matched.length > 0) {
-                    console.log(`🎉 ${data.matched.length}개의 SNS 인기 맛집을 찾았습니다!`);
-                } else {
-                    setError('이 지역에서 SNS에서 언급된 맛집을 찾지 못했습니다. 다른 지역을 검색해보세요.');
-                }
-            } else {
-                setError(data.error || '매칭에 실패했습니다.');
+                console.warn('⚠️ Python API 서버 연결 실패로 로컬 더미 데이터를 사용합니다.');
+                setError('Python API 서버 연결에 실패했습니다. 서버가 실행 중인지 확인해주세요.');
             }
 
         } catch (error) {
@@ -115,6 +221,53 @@ const Nearby = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+    
+    // Python API에서 가져온 SNS 맛집 데이터와 지도 검색 결과를 매칭하는 함수
+    const matchRestaurantsWithMapResults = (snsRestaurants, mapResults) => {
+        const matched = [];
+        
+        // 각 지도 검색 결과에 대해
+        mapResults.forEach(mapPlace => {
+            // 가장 유사한 SNS 맛집 찾기
+            const matchedSnsRestaurant = findSimilarRestaurant(mapPlace, snsRestaurants);
+            
+            if (matchedSnsRestaurant) {
+                matched.push({
+                    map_info: mapPlace,
+                    sns_info: {
+                        id: matchedSnsRestaurant.id || 0,
+                        name: matchedSnsRestaurant.name || mapPlace.place_name,
+                        address: matchedSnsRestaurant.address || mapPlace.address_name,
+                        sns_mentions: matchedSnsRestaurant.sns_mentions || 0,
+                        rating: matchedSnsRestaurant.rating || "0.0",
+                        review_count: matchedSnsRestaurant.review_count || 0,
+                        tags: matchedSnsRestaurant.tags || [],
+                        description: matchedSnsRestaurant.description || '',
+                        source: 'python_api'
+                    },
+                    match_score: 0.8,
+                    match_type: 'name_match'
+                });
+            }
+        });
+        
+        return matched;
+    };
+    
+    // 유사한 식당을 찾는 함수
+    const findSimilarRestaurant = (mapPlace, snsRestaurants) => {
+        if (!mapPlace || !mapPlace.place_name || !snsRestaurants || !Array.isArray(snsRestaurants)) {
+            return null;
+        }
+        
+        // 가장 이름이 유사한 식당 찾기
+        const mapPlaceName = mapPlace.place_name.toLowerCase();
+        
+        return snsRestaurants.find(snsPlace => {
+            const snsPlaceName = (snsPlace.name || '').toLowerCase();
+            return snsPlaceName.includes(mapPlaceName) || mapPlaceName.includes(snsPlaceName);
+        });
     };
 
     // 일반 지도 모드로 돌아가기
@@ -169,7 +322,7 @@ const Nearby = () => {
                     <button 
                         className={`sns-search-btn ${showSnsMode ? 'active' : ''}`}
                         onClick={showSnsMode ? handleResetSearch : handleSnsSearch}
-                        disabled={isLoading}
+                        disabled={isLoading || pythonApiStatus === 'offline'}
                     >
                         {isLoading ? (
                             <>
@@ -178,31 +331,54 @@ const Nearby = () => {
                             </>
                         ) : showSnsMode ? (
                             <>
-                                🏠 일반 검색
+                                🏠 일반 검색으로 돌아가기
                             </>
                         ) : (
                             <>
-                                🔥 SNS 맛집 찾기
+                                🔥 SNS 인기 맛집 찾기
                             </>
                         )}
                     </button>
-
-                    {/* 매칭 통계 표시 */}
-                    {matchStats && showSnsMode && (
-                        <div className="match-stats">
-                            <span className="stats-text">
-                                📊 매칭률: <strong>{matchStats.matchRate}%</strong> 
-                                ({matchStats.matched}/{matchStats.total})
+                    
+                    {/* Python API 서버 상태 표시 */}
+                    <div className={`api-status ${pythonApiStatus}`}>
+                        {pythonApiStatus === 'checking' && (
+                            <span>크롤링 API 확인 중...</span>
+                        )}
+                        {pythonApiStatus === 'online' && (
+                            <span>✅ 크롤링 API 연결됨</span>
+                        )}
+                        {pythonApiStatus === 'offline' && (
+                            <span>❌ 크롤링 API 연결 안됨
+                                <button 
+                                    className="retry-btn"
+                                    onClick={checkPythonApiStatus}
+                                >
+                                    재시도
+                                </button>
                             </span>
-                            <button 
-                                className="details-btn"
-                                onClick={handleShowMatchDetails}
-                                title="매칭 상세 정보 보기"
-                            >
-                                📋
-                            </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
+                    
+                    {/* 백엔드 API 서버 상태 표시 */}
+                    <div className={`api-status ${backendApiStatus}`}>
+                        {backendApiStatus === 'checking' && (
+                            <span>백엔드 API 확인 중...</span>
+                        )}
+                        {backendApiStatus === 'online' && (
+                            <span>✅ 백엔드 연결됨</span>
+                        )}
+                        {backendApiStatus === 'offline' && (
+                            <span>❌ 백엔드 연결 안됨
+                                <button 
+                                    className="retry-btn"
+                                    onClick={checkBackendApiStatus}
+                                >
+                                    재시도
+                                </button>
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 {/* 에러 메시지 표시 */}

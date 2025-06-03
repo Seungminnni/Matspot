@@ -1,0 +1,6 @@
+@echo off
+echo 백엔드 서버 실행 시작...
+cd /d C:\Users\seungmin\Desktop\Matspot\server
+npm install
+echo 서버 시작 중...
+node server.js

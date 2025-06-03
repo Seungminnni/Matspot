@@ -175,6 +175,37 @@
     border: 1px solid #ddd;
 }
 
+/* 서버 오류 배너 스타일 */
+.server-error-banner {
+    background-color: #fff3f3;
+    border: 1px solid #ffcccb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.server-error-banner p {
+    color: #e74c3c;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.server-error-banner button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.server-error-banner button:hover {
+    background-color: #c0392b;
+}
+
 @media (max-width: 480px) {
     .auth-box {
         padding: 20px;
@@ -183,4 +214,4 @@
     .social-buttons {
         flex-direction: column;
     }
-} 
+}
