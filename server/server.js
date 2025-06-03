@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const authRoutes = require('./routes/authRoutes');
+const restaurantRoutes = require('./routes/restaurantRoutes');
 const initializeDatabase = require('./initDb');
 
 // 환경 변수 로드
@@ -36,6 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // 라우트 설정
 app.use('/api/auth', authRoutes);
+app.use('/api/restaurants', restaurantRoutes);
 
 // 기본 라우트
 app.get('/', (req, res) => {
