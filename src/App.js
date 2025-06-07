@@ -3,13 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import SplashScreen from './components/SplashScreen';
 import Header from './components/Header';
-import CategoryFilter from './components/CategoryFilter';
 import KeywordFilter from './components/KeywordFilter';
-import PlaceTypeSelector from './components/PlaceTypeSelector';
 import Banner from './components/Banner';
 import Footer from './components/Footer';
-import RestaurantList from './components/RestaurantList';
 import NearbyPage from './components/NearbyPage';
+import RouteCreationPage from './components/RouteCreationPage';
 import Social from './pages/Social';
 import MyPage from './pages/MyPage';
 import Auth from './pages/Auth';
@@ -25,10 +23,8 @@ function App() {
   const MainContent = () => (
     <>
       <Banner />
-      <CategoryFilter />
-      <PlaceTypeSelector />
       <KeywordFilter />
-      <RestaurantList />
+      <RouteCreationPage />
     </>
   );
 

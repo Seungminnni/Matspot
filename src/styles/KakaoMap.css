@@ -31,25 +31,6 @@
     z-index: 2;
 }
 
-.sns-error {
-    top: 40%;
-    background-color: rgba(255, 236, 236, 0.95);
-    border-left: 4px solid #ff6b6b;
-}
-
-.loading-indicator {
-    position: absolute;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 10px 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 2;
-    border-left: 4px solid #3498db;
-}
-
 .map-search-button {
     position: absolute;
     bottom: 20px;
@@ -69,15 +50,4 @@
 
 .map-search-button:hover {
     background-color: #e44607;
-}
-
-.sns-recommend-button {
-    background-color: #ff6b6b !important;
-    font-weight: bold;
-    border: 2px solid white !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
-}
-
-.sns-recommend-button:hover {
-    background-color: #ff5252 !important;
 }

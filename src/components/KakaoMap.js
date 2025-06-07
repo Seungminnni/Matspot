@@ -1,256 +1,32 @@
-import React, { useEffect, useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import '../styles/KakaoMap.css';
-import axios from 'axios'; // axios 추가
 
-const KakaoMap = forwardRef(({ 
-  distance = 1000, 
-  searchKeyword = '', 
-  searchCount = 0, 
-  onSearchComplete = () => {},
-  snsRestaurants = [],
-  showSnsMode = false,
-  onMapReady = () => {}
-}, ref) => {
+function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {} }) {
   const [mapError, setMapError] = useState(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const markersRef = useRef([]);
-  const snsMarkersRef = useRef([]); // SNS 마커들을 별도로 관리
   const placesRef = useRef(null);
   const currentPositionRef = useRef(null);
-  const centerRef = useRef(null);
-  const lastSearchRef = useRef('');
-  const [currentPlaces, setCurrentPlaces] = useState([]); // 현재 검색된 장소들
-  const [isFetchingSns, setIsFetchingSns] = useState(false); // SNS 추천 데이터 로딩 상태
-  const [snsError, setSnsError] = useState(null); // SNS 추천 에러 상태
-
-  // 일반 마커들을 모두 제거하는 함수
+  const centerRef = useRef(null); // 지도의 현재 중심 좌표를 저장할 ref
+  const lastSearchRef = useRef(''); // track last searched keyword to prevent repeats
+  
+  // 마커들을 모두 제거하는 함수
   const removeAllMarkers = () => {
-    console.log('마커 제거 전 상태:', {
-      일반마커: markersRef.current.length,
-      SNS마커: snsMarkersRef.current.length
-    });
-    
     if (markersRef.current.length > 0) {
-      // 기존 마커 제거 전에 보존해야 할 마커 확인
-      const markersToPreserve = snsMarkersRef.current.map(snsMarker => snsMarker.getPosition().toString());
-      
-      // 일반 마커만 제거
-      markersRef.current.forEach(marker => {
-        const markerPosition = marker.getPosition().toString();
-        
-        // SNS 마커와 위치가 동일한 일반 마커는 유지 (중복 방지)
-        if (!markersToPreserve.includes(markerPosition)) {
-          marker.setMap(null);
-        }
-      });
-      
+      markersRef.current.forEach(marker => marker.setMap(null));
       markersRef.current = [];
-      console.log('일반 마커 제거 완료');
     }
-  };
-
-  // SNS 마커들을 모두 제거하는 함수
-  const clearSnsMarkers = () => {
-    if (snsMarkersRef.current.length > 0) {
-      snsMarkersRef.current.forEach(marker => marker.setMap(null));
-      snsMarkersRef.current = [];
-      console.log('SNS 마커 제거 완료');
-    }
-  };
-
-  // SNS 추천 데이터 가져오기
-  const fetchSnsRecommendations = async () => {
-    // 이미 로딩 중이면 중복 요청 방지
-    if (isFetchingSns) return;
-    
-    try {
-      setIsFetchingSns(true);
-      setSnsError(null);
-      
-      // 현재 위치 또는 지도 중심 좌표 가져오기
-      const currentLocation = currentPositionRef.current || centerRef.current;
-      if (!currentLocation) {
-        setSnsError('위치 정보를 가져올 수 없습니다.');
-        return;
-      }
-      
-      const lat = currentLocation.getLat();
-      const lng = currentLocation.getLng();
-      
-      console.log('SNS 추천 요청:', { lat, lng });
-        // 백엔드 크롤링 API 호출 - 실제 존재하는 엔드포인트 사용
-      const response = await axios.get('http://localhost:5001/api/sns-restaurants', {
-        params: {
-          lat,
-          lng,
-          radius: distance || 1000,
-          limit: 10
-        }
-      });      console.log('SNS 추천 응답:', response.data);
-        if (response.data && response.data.length > 0) {
-        // 기존 마커 제거 - SNS 추천 버튼 클릭 시 모든 마커 제거
-        console.log('SNS 추천: 기존 마커 제거 시작');
-        removeAllMarkers(); // 일반 마커 제거
-        clearSnsMarkers();  // SNS 마커 제거
-        
-        // SNS 추천 마커 표시
-        const formattedRestaurants = response.data.map(restaurant => ({
-          map_info: {
-            place_name: restaurant.name,
-            address_name: restaurant.address,
-            x: restaurant.longitude || 126.9780, // 기본값 설정
-            y: restaurant.latitude || 37.5665    // 기본값 설정
-          },
-          sns_info: {
-            sns_mentions: restaurant.sns_mentions || 0,
-            rating: restaurant.rating || 0,
-            review_count: restaurant.review_count || 0,
-            tags: restaurant.tags || []
-          },
-          match_score: 0.8 // 기본 점수
-        }));
-        
-        // snsRestaurants 상태 업데이트 (props로 전달된 함수 사용)
-        if (typeof onSearchComplete === 'function') {
-          onSearchComplete(formattedRestaurants);
-        }
-        
-        // SNS 마커 표시
-        displaySnsMarkers(formattedRestaurants);
-      } else {
-        setSnsError('현재 위치 주변에 추천할 SNS 맛집이 없습니다.');
-      }    } catch (error) {
-      console.error('SNS 추천 에러:', error);
-      setSnsError('SNS 추천 데이터를 가져오는 중 오류가 발생했습니다.');
-    } finally {
-      setIsFetchingSns(false);
+    // 현재 위치 마커도 제거 (루트 표시 모드에서는 필요 없을 수 있음)
+    if (markerRef.current) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
     }
   };
   
-  // 외부에서 접근 가능한 메서드들을 정의
-  useImperativeHandle(ref, () => ({
-    getPlaces: () => currentPlaces,
-    getCenter: () => centerRef.current,
-    getBounds: () => mapRef.current?.getBounds(),
-    clearSnsMarkers: clearSnsMarkers,
-    fetchSnsRecommendations: fetchSnsRecommendations // SNS 추천 함수 추가
-  }));
-  
-  // SNS 마커 표시 함수 (snsRestaurants를 파라미터로 받도록 수정)
-  const displaySnsMarkers = useCallback((restaurants = snsRestaurants) => {
-    if (!mapRef.current || !restaurants || !restaurants.length) return;
-
-    console.log('SNS 마커 표시 시작:', restaurants.length);
-
-    // 기존 SNS 마커들 제거
-    clearSnsMarkers();
-
-    // SNS 마커 위치 추적을 위한 배열
-    const snsMarkerPositions = [];
-
-    snsRestaurants.forEach((restaurant) => {
-      const mapInfo = restaurant.map_info;
-      const snsInfo = restaurant.sns_info;
-      
-      if (!mapInfo.x || !mapInfo.y) {
-        console.warn('위치 정보가 없는 맛집:', mapInfo.place_name);
-        return;
-      }
-
-      const position = new window.kakao.maps.LatLng(mapInfo.y, mapInfo.x);
-      snsMarkerPositions.push(position.toString());
-      
-      // SNS 마커 이미지 생성 (빨간색으로 구분)
-      const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
-      const imageSize = new window.kakao.maps.Size(64, 69);
-      const imageOption = { offset: new window.kakao.maps.Point(27, 69) };
-      const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
-      
-      const marker = new window.kakao.maps.Marker({
-        map: mapRef.current,
-        position: position,
-        image: markerImage,
-        zIndex: 10 // 일반 마커보다 위에 표시
-      });
-      
-      // SNS 정보가 포함된 인포윈도우 생성
-      const infoContent = `
-        <div style="padding:10px;width:250px;font-size:12px;">
-          <div style="font-weight:bold;color:#ff4757;margin-bottom:5px;">
-            🌟 SNS 인기 맛집
-          </div>
-          <div style="font-weight:bold;margin-bottom:5px;">${mapInfo.place_name}</div>
-          <div style="color:#666;margin-bottom:5px;">${mapInfo.address_name}</div>
-          <div style="background:#f1f2f6;padding:5px;border-radius:4px;">
-            <div>📱 SNS 언급: <strong>${snsInfo.sns_mentions}회</strong></div>
-            <div>⭐ 평점: <strong>${snsInfo.rating}/5.0</strong></div>
-            <div>💬 리뷰: <strong>${snsInfo.review_count}개</strong></div>
-            <div>🏷️ 태그: ${snsInfo.tags.slice(0, 3).join(', ')}</div>
-            <div style="margin-top:5px;font-size:11px;color:#666;">
-              매칭 점수: ${(restaurant.match_score * 100).toFixed(1)}%
-            </div>
-          </div>
-        </div>
-      `;
-      
-      const infowindow = new window.kakao.maps.InfoWindow({
-        content: infoContent,
-        removable: true
-      });
-      
-      // 마커 클릭 이벤트
-      window.kakao.maps.event.addListener(marker, 'click', function() {
-        // 다른 인포윈도우들 닫기
-        snsMarkersRef.current.forEach(m => {
-          if (m.infowindow) {
-            m.infowindow.close();
-          }
-        });
-        infowindow.open(mapRef.current, marker);
-      });
-      
-      // 마커에 인포윈도우 참조 저장
-      marker.infowindow = infowindow;
-      marker.restaurantData = restaurant;
-      
-      snsMarkersRef.current.push(marker);
-    });
-
-    console.log(`🌟 SNS 맛집 ${snsRestaurants.length}개 마커 표시 완료`);
-    
-    // 일반 마커 중에서 SNS 마커와 위치가 동일한 마커가 있다면 잠시 숨기기
-    if (markersRef.current.length > 0) {
-      markersRef.current.forEach(marker => {
-        const markerPosition = marker.getPosition().toString();
-        if (snsMarkerPositions.includes(markerPosition)) {
-          marker.setVisible(false);
-        }
-      });
-    }
-  }, [snsRestaurants]);
-
-  // SNS 모드 변경 시 마커 표시/숨김 처리
-  useEffect(() => {
-    if (showSnsMode && snsRestaurants.length > 0) {
-      displaySnsMarkers();
-    } else {
-      clearSnsMarkers();
-    }
-  }, [showSnsMode, snsRestaurants, displaySnsMarkers]);
-
   // 장소 검색 함수를 useCallback으로 메모이제이션
   const searchPlaces = useCallback((keyword, useCurrentPosition = false) => {
-    console.log('🔍 검색 시작:', { 
-      키워드: keyword, 
-      거리: distance, 
-      현재위치사용: useCurrentPosition,
-      마커상태: {
-        일반마커: markersRef.current.length,
-        SNS마커: snsMarkersRef.current.length,
-        SNS모드: showSnsMode
-      }
-    });
+    console.log('검색 시작:', { keyword, distance, useCurrentPosition });
     
     if (!window.kakao || !window.kakao.maps || !mapRef.current) {
       console.error('카카오맵 API가 로드되지 않았습니다.');
@@ -260,51 +36,44 @@ const KakaoMap = forwardRef(({
     if (!placesRef.current) {
       placesRef.current = new window.kakao.maps.services.Places();
     }
-      // 검색 시작 시 에러 메시지만 초기화
+    
+    // 기존 마커들 제거
+    // Clear previous error and markers for new search
     setMapError(null);
+    removeAllMarkers();
     
-    // 마커는 검색 결과가 성공적으로 반환된 후에 제거할 것입니다
-    
-    // 현재 지도 중심 좌표 가져오기
-    if (mapRef.current) {
-      centerRef.current = mapRef.current.getCenter();
-    }
+    // 현재 지도 중심 좌표 가져오기 (항상 최신 값으로 업데이트)
+    const currentMapCenter = mapRef.current ? mapRef.current.getCenter() : new window.kakao.maps.LatLng(37.5665, 126.9780); // 지도 중심 가져오거나 기본값 사용
     
     // 검색 옵션 설정
-    const searchLocation = useCurrentPosition ? currentPositionRef.current : centerRef.current;
+    // useCurrentPosition이 true면 현재 위치 사용, 아니면 지도 중심 좌표 사용
+    const searchLocation = useCurrentPosition && currentPositionRef.current ? currentPositionRef.current : currentMapCenter;
+    
+    console.log('검색 위치:', { 
+      useCurrentPosition, 
+      searchLocation: searchLocation?.toString(),
+      mapCenter: currentMapCenter?.toString(),
+      userPosition: currentPositionRef.current?.toString()
+    });
     
     const searchOptions = {
       location: searchLocation,
-      radius: 5000
+      radius: 5000,  // 검색 반경을 5km로 확장
+      // 음식점 카테고리로 필터링 (FD6: 음식점) - 필요시 주석 처리
+      // category_group_code: 'FD6'
     };
     
     // 장소 검색 실행
     placesRef.current.keywordSearch(keyword, (data, status) => {
-      console.log('카카오맵 검색 결과:', { 
-        상태: status, 
-        결과수: data?.length || 0,
-        키워드: keyword 
-      });      if (status === window.kakao.maps.services.Status.OK) {
+      console.log('카카오맵 검색 결과:', { status, data, keyword });
+      
+      if (status === window.kakao.maps.services.Status.OK) {
         const bounds = new window.kakao.maps.LatLngBounds();
         const results = [];
         
         // 검색 결과마다 마커 생성
         data.forEach((place) => {
           const position = new window.kakao.maps.LatLng(place.y, place.x);
-          
-          // SNS 마커와 위치가 같은 마커는 생성하지 않음 (충돌 방지)
-          if (showSnsMode) {
-            const isDuplicate = snsMarkersRef.current.some(snsMarker => 
-              snsMarker.getPosition().equals(position)
-            );
-            if (isDuplicate) {
-              console.log(`중복 마커 방지: ${place.place_name} (SNS 마커와 위치 동일)`);
-              results.push(place);  // 결과에는 포함
-              bounds.extend(position);  // 바운드에는 포함
-              return;  // 마커는 생성하지 않음
-            }
-          }
-          
           const marker = new window.kakao.maps.Marker({
             map: mapRef.current,
             position: position
@@ -330,20 +99,16 @@ const KakaoMap = forwardRef(({
             infowindow.close();
           });
           
-          // 마커에 place 정보 저장
-          marker.placeInfo = place;
-          
           markersRef.current.push(marker);
           bounds.extend(position);
           results.push(place);
         });
-        
         // 검색 결과 바운드로 지도 이동
         if (useCurrentPosition) {
+          // 현재 위치에서 검색 버튼을 눌렀을 때만 지도 중심 이동
           mapRef.current.setBounds(bounds);
         }
-        mapRef.current.setLevel(5);
-        
+        mapRef.current.setLevel(5); // 검색 후 지도 축척을 250m로 고정
         if (useCurrentPosition && currentPositionRef.current) {
           mapRef.current.setCenter(currentPositionRef.current);
           mapRef.current.setLevel(5);
@@ -351,74 +116,44 @@ const KakaoMap = forwardRef(({
             mapRef.current.setCenter(currentPositionRef.current);
           }, 0);
         }
-        
-        // 검색된 장소들 상태 업데이트
-        setCurrentPlaces(results);
-        
         // 검색 결과 콜백으로 전달
         onSearchComplete(results);
-        
-        // 로그 추가: 검색 후 마커 상태 확인
-        console.log('검색 완료 후 마커 상태:', {
-          일반마커: markersRef.current.length,
-          SNS마커: snsMarkersRef.current.length,
-          검색키워드: keyword
-        });
       } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+        console.warn('검색 결과 없음:', { keyword, location: searchOptions.location, radius: 5000 });
         const locationMessage = searchOptions.location === currentPositionRef.current ? 
           '현재 위치' : '현재 지도 화면';
         setMapError(`'${keyword}' 검색 결과가 ${locationMessage} 기준 5km 내에 존재하지 않습니다.`);
-        setCurrentPlaces([]);
         onSearchComplete([]);
       } else if (status === window.kakao.maps.services.Status.ERROR) {
         console.error('카카오맵 검색 오류:', status);
         setMapError('검색 중 오류가 발생했습니다.');
-        setCurrentPlaces([]);
         onSearchComplete([]);
       }
-    }, searchOptions);  }, [distance, onSearchComplete, showSnsMode]);
-    // 검색 키워드가 변경될 때 검색 실행
+    }, searchOptions);
+  }, [distance, onSearchComplete, currentPositionRef]);
+  
+  // 검색 키워드가 변경될 때 검색 실행 (한 번만 수행)
   useEffect(() => {
+    // 무한루프 방지: searchKeyword가 비어있지 않고, searchCount가 0보다 클 때만 검색
     if (
       mapRef.current &&
       searchKeyword &&
       searchCount > 0 &&
       lastSearchRef.current !== `${searchKeyword}_${searchCount}`
     ) {
-      setMapError(null);      // 검색 전 상태 로깅
-      console.log('검색 전 마커 상태:', {
-        일반마커: markersRef.current.length,
-        SNS마커: snsMarkersRef.current.length,
-        검색키워드: searchKeyword,
-        검색카운트: searchCount
-      });
-      
-      // 검색어가 완전히 다른 경우 마커 비우기
-      if (lastSearchRef.current && !lastSearchRef.current.includes(searchKeyword)) {
-        removeAllMarkers();
-      }
-      
+      setMapError(null);
       const effectiveKeyword = searchKeyword || '맛집';
       searchPlaces(effectiveKeyword, false);
-      
-      // 현재 검색 저장
       lastSearchRef.current = `${searchKeyword}_${searchCount}`;
-      
-      // 검색 후 마커 상태 확인용 타이머
-      setTimeout(() => {
-        console.log('검색 후 마커 상태:', {
-          일반마커: markersRef.current.length,
-          SNS마커: snsMarkersRef.current.length
-        });
-      }, 1000);
     }
   }, [searchKeyword, searchCount, searchPlaces]);
   
-  // 지도 초기화
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    // 이미 스크립트가 있으면 중복 추가 방지
     if (!window.kakao) {
       const script = document.createElement('script');
-      script.src = "//dapi.kakao.com/v2/maps/sdk.js?appkey=c6d12eab1ef43ca9745a713e8669183b&libraries=services&autoload=false";
+      script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=c6d12eab1ef43ca9745a713e8669183b&libraries=services&autoload=false";
       script.async = true;
       document.head.appendChild(script);
 
@@ -437,7 +172,9 @@ const KakaoMap = forwardRef(({
     
     function createMap() {
       const container = document.getElementById('map');
-      const mapLevel = 7;
+      
+      // 초기 지도 레벨 설정 (기본값: 1km 범위)
+      const mapLevel = 7; // 1km에 대응하는 레벨
 
       const options = {
         center: new window.kakao.maps.LatLng(37.5665, 126.9780), // 서울 시청
@@ -448,43 +185,40 @@ const KakaoMap = forwardRef(({
       const map = new window.kakao.maps.Map(container, options);
       mapRef.current = map;
       
-      // 지도 이벤트 리스너들
+      // 지도 이동 이벤트 리스너 추가
       window.kakao.maps.event.addListener(map, 'dragend', function() {
+        // 지도 중심 좌표 업데이트
         centerRef.current = map.getCenter();
+        console.log('지도 중심 변경:', centerRef.current.toString());
       });
       
+      // 지도 확대/축소 이벤트 리스너 추가
       window.kakao.maps.event.addListener(map, 'zoom_changed', function() {
+        // 지도 중심 좌표 업데이트
         centerRef.current = map.getCenter();
+        console.log('지도 줌 변경:', centerRef.current.toString());
       });
       
+      // 초기 중심 좌표 설정
       centerRef.current = map.getCenter();
-      
-      // 전역 접근을 위한 인스턴스 저장
-      window.kakaoMapInstance = {
-        map: map,
-        getPlaces: () => currentPlaces,
-        getCenter: () => centerRef.current,
-        getBounds: () => map.getBounds(),
-        clearSnsMarkers: clearSnsMarkers,
-        markersRef: markersRef
-      };
-      
-      // onMapReady 콜백 실행
-      onMapReady(window.kakaoMapInstance);
       
       // 현재 위치 가져오기
       if (navigator.geolocation) {
+        console.log('Geolocation API 지원됨, 위치 정보 요청 중...');
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            // 현재 위치 좌표 구하기
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
+            console.log('위치 정보 가져오기 성공:', lat, lng);
             const currentPosition = new window.kakao.maps.LatLng(lat, lng);
             currentPositionRef.current = currentPosition;
             
             // 현재 위치로 지도 중심 이동
             map.setCenter(currentPosition);
-            map.setLevel(5);
+            map.setLevel(5); // 250m 축척으로 지도 레벨 변경
             
+            // 지도 중심 좌표 업데이트
             centerRef.current = currentPosition;
             
             // 현재 위치 마커 생성
@@ -499,25 +233,37 @@ const KakaoMap = forwardRef(({
             });
             infowindow.open(map, marker);
             
+            // 마커 클릭 이벤트 등록
             window.kakao.maps.event.addListener(marker, 'click', function() {
               infowindow.open(map, marker);
             });
             
             markerRef.current = marker;
+            
+            // 검색어가 있다면 검색 실행
+            // 검색어가 있다면 검색 실행
+            // 검색은 useEffect에서 searchKeyword 변경 시 처리됩니다
+            
+            // 마커 초기화 완료 후 추가 작업이 필요하다면 이곳에 작성
           },
           (error) => {
-            console.error('위치 정보 가져오기 실패:', error);
+            console.error('위치 정보를 가져오는데 실패했습니다:', error);
+            console.error('에러 코드:', error.code);
             let errorMessage = '위치 정보를 가져오는데 실패했습니다.';
             
+            // 오류 코드에 따른 메시지 설정
             switch(error.code) {
               case error.PERMISSION_DENIED:
-                errorMessage = '위치 정보 접근이 거부되었습니다.';
+                errorMessage = '위치 정보 접근이 거부되었습니다. 브라우저의 위치 접근 권한을 확인해주세요.';
                 break;
               case error.POSITION_UNAVAILABLE:
                 errorMessage = '위치 정보를 사용할 수 없습니다.';
                 break;
               case error.TIMEOUT:
                 errorMessage = '위치 정보 요청이 시간 초과되었습니다.';
+                break;
+              case error.UNKNOWN_ERROR:
+                errorMessage = '알 수 없는 오류가 발생했습니다.';
                 break;
               default:
                 errorMessage = '알 수 없는 오류가 발생했습니다.';
@@ -527,26 +273,29 @@ const KakaoMap = forwardRef(({
             setMapError(errorMessage);
           },
           { 
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
+            enableHighAccuracy: true, // 높은 정확도 요청
+            timeout: 10000,           // 10초 타임아웃
+            maximumAge: 0             // 캐시된 위치 정보를 사용하지 않음
           }
         );
       } else {
         setMapError('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
       }
-    }    // 정리 함수
+    }
+    
+    // 컴포넌트가 언마운트될 때 정리 함수
     return () => {
       if (markerRef.current) {
         markerRef.current.setMap(null);
       }
       removeAllMarkers();
-      clearSnsMarkers();    };
-  }, [onMapReady, currentPlaces]);
+    };
+  }, []);
 
   // 거리 변경 시 지도 레벨 업데이트
   useEffect(() => {
     if (mapRef.current && window.kakao && window.kakao.maps) {
+      // calculate map level based on distance
       let level = 3;
       if (distance <= 50) level = 3;
       else if (distance <= 100) level = 4;
@@ -556,6 +305,7 @@ const KakaoMap = forwardRef(({
       mapRef.current.setLevel(level);
     }
   }, [distance]);
+
   return (
     <div className="map-container">
       {mapError && (
@@ -563,19 +313,6 @@ const KakaoMap = forwardRef(({
           <p>{mapError}</p>
         </div>
       )}
-      
-      {snsError && (
-        <div className="map-error sns-error">
-          <p>{snsError}</p>
-        </div>
-      )}
-      
-      {isFetchingSns && (
-        <div className="loading-indicator">
-          <p>SNS 맛집 추천 데이터를 가져오는 중...</p>
-        </div>
-      )}
-      
       <div
         id="map"
         style={{
@@ -585,44 +322,27 @@ const KakaoMap = forwardRef(({
           boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         }}
       ></div>
-        {/* 현재 위치에서 검색하는 버튼 */}      <button
+      
+      {/* 현재 위치에서 검색하는 버튼 */}
+      <button
         className="map-search-button"
         onClick={() => {
           if (searchKeyword) {
+            // 마지막 검색어 초기화하여 같은 키워드로 다시 검색 가능하게 함
             lastSearchRef.current = "";
+            // 현재 위치 기준으로 검색
             const effectiveKeyword = searchKeyword || '맛집';
-            searchPlaces(effectiveKeyword, true);
+            searchPlaces(effectiveKeyword, true); // true = 현재 위치 사용
           }
         }}
         style={{
-          display: searchKeyword ? 'block' : 'none',
-          bottom: '80px', // SNS 추천 버튼 위에 위치하도록 조정
-          right: '20px' // 우측에 배치
+          display: searchKeyword ? 'block' : 'none', // 검색어가 있을 때만 표시
         }}
       >
         현재 위치에서 검색
       </button>
-      
-      {/* SNS 추천 버튼 추가 */}
-      <button
-        className="map-search-button sns-recommend-button"
-        onClick={() => {
-          // SNS 추천 버튼 클릭 시 백엔드 크롤링 DB와 통신
-          fetchSnsRecommendations();
-        }}
-        style={{
-          bottom: '20px',
-          right: '20px', // 우측에 배치
-          backgroundColor: '#ff6b6b', // 다른 색상으로 구분
-          fontWeight: 'bold',
-          border: '2px solid white',
-          boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)'
-        }}
-      >
-        SNS 맛집 추천
-      </button>
     </div>
   );
-});
+}
 
 export default KakaoMap;

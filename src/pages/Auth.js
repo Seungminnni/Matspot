@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Auth.css';
-import { loginUser, registerUser, checkServerStatus } from '../services/authService';
+import { loginUser, registerUser } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 
 const Auth = () => {
@@ -17,29 +17,11 @@ const Auth = () => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [serverStatus, setServerStatus] = useState(null);
 
-    // 서버 상태 확인
     useEffect(() => {
-        const checkServer = async () => {
-            try {
-                const isServerRunning = await checkServerStatus();
-                setServerStatus(isServerRunning);
-            } catch (err) {
-                console.error("서버 상태 확인 실패:", err);
-                setServerStatus(false);
-            }
-        };
-        
-        checkServer();
-    }, []);
-
-    // location.state가 변경될 때 로그인/회원가입 모드 업데이트
-    useEffect(() => {
+        // location.state가 변경될 때 로그인/회원가입 모드 업데이트
         setIsLogin(location.state?.isLogin ?? true);
-    }, [location.state]);
-
-    const handleSubmit = async (e) => {
+    }, [location.state]);    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
@@ -102,12 +84,6 @@ const Auth = () => {
         <div className="auth-container">
             <div className="auth-box">
                 <h2>{isLogin ? '로그인' : '회원가입'}</h2>
-                {serverStatus === false && (
-                    <div className="server-error-banner">
-                        <p>⚠️ 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.</p>
-                        <button onClick={() => window.location.reload()}>다시 시도</button>
-                    </div>
-                )}
                 <form onSubmit={handleSubmit}>
                     {!isLogin && (
                         <div className="form-group">                            <label>이름</label>
@@ -157,11 +133,7 @@ const Auth = () => {
                         </div>
                     )}                    {error && <div className="error-message">{error}</div>}
                     
-                    <button 
-                        type="submit" 
-                        className="submit-button" 
-                        disabled={loading || serverStatus === false}
-                    >
+                    <button type="submit" className="submit-button" disabled={loading}>
                         {loading ? '처리 중...' : isLogin ? '로그인' : '회원가입'}
                     </button>
                 </form>
@@ -218,4 +190,4 @@ const Auth = () => {
     );
 };
 
-export default Auth;
+export default Auth; 
