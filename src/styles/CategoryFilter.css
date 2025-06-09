@@ -1,0 +1,66 @@
+.category-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 40px;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.filter-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+    padding: 0.5rem 1rem;
+    background: #f0f0f0;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+}
+
+.category-filter {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.3rem;
+}
+
+.category-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 25px;
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #666;
+}
+
+.category-button:hover {
+    background-color: #f8f8f8;
+    transform: none;
+    box-shadow: none;
+}
+
+.category-button.selected {
+    background-color: #FF6B6B;
+    color: white;
+}
+
+.category-emoji {
+    font-size: 20px;
+}
+
+.category-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+} 

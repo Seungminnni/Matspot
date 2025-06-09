@@ -1,0 +1,116 @@
+import React from 'react';
+import '../styles/KeywordFilter.css';
+
+// 임시 장소 유형 목록 (이모지 추가)
+const placeTypes = [
+    { id: 'restaurant', name: '식당', emoji: '🍽️' },
+    { id: 'cafe', name: '카페', emoji: '☕' },
+];
+
+const KeywordFilter = ({ place, updatePlace, onSearch }) => {
+    // 키워드 매핑
+    const keywordMap = {
+        'western': '양식',
+        'chinese': '중식',
+        'japanese': '일식',
+        'korean': '한식',
+        'dessert': '디저트'
+    };
+
+    const keywords = [
+        { id: 'western', name: '양식', emoji: '🍝' },
+        { id: 'chinese', name: '중식', emoji: '🥢' },
+        { id: 'japanese', name: '일식', emoji: '🍣' },
+        { id: 'korean', name: '한식', emoji: '🍚' },
+        { id: 'dessert', name: '디저트', emoji: '🍰' }
+    ];
+
+    const sortOptions = [
+        { id: 'distance', name: '거리순', emoji: '📍' },
+        { id: 'sns', name: 'SNS 인기순', emoji: '📱' },
+        { id: 'rating', name: '리뷰수', emoji: '📝' }
+    ];
+
+    // 장소 유형 변경 함수
+    const handlePlaceTypeChange = (type) => {
+        updatePlace(place.id, { placeType: type });
+    };
+
+    // 키워드1 토글 함수
+    const toggleKeyword = (keywordId) => {
+        const newKeywords = place.selectedKeywords.includes(keywordId)
+            ? place.selectedKeywords.filter(id => id !== keywordId)
+            : [...place.selectedKeywords, keywordId];
+        updatePlace(place.id, { selectedKeywords: newKeywords });
+    };
+
+    // 키워드2 선택 함수
+    const selectSortOption = (optionId) => {
+        if (optionId === 'sns' || optionId === 'rating') {
+            alert(`${optionId === 'sns' ? 'SNS 인기순' : '리뷰수'}은 아직 구현되지 않았습니다. 거리순을 선택해주세요.`);
+            return; 
+        }
+        updatePlace(place.id, { selectedSortOption: optionId });
+    };
+
+    return (
+        <div className="filters-container">
+            <div className="filter-group">
+                <h3 className="group-number-heading">{place.name}</h3>
+
+                <div className="filter-section-wrapper">
+                    <div className="place-type-filter">
+                         <h4 className="section-title">장소 유형</h4>
+                         <div className="keyword-grid">
+                            {placeTypes.map(type => (
+                                <button
+                                    key={type.id}
+                                    className={`keyword-button ${place.placeType === type.id ? 'selected' : ''}`}
+                                    onClick={() => handlePlaceTypeChange(type.id)}
+                                >
+                                    {type.emoji && <span className="keyword-emoji">{type.emoji}</span>}
+                                    <span className="keyword-name">{type.name}</span>
+                                </button>
+                            ))}
+                         </div>
+                    </div>
+
+                    <div className="keyword-filter">
+                        <h4 className="section-title">키워드 1 (음식 종류)</h4>
+                        <div className="keyword-grid">
+                            {keywords.map(keyword => (
+                                <button
+                                    key={keyword.id}
+                                    className={`keyword-button ${place.selectedKeywords.includes(keyword.id) ? 'selected' : ''}`}
+                                    onClick={() => toggleKeyword(keyword.id)}
+                                >
+                                    {keyword.emoji && <span className="keyword-emoji">{keyword.emoji}</span>}
+                                    <span className="keyword-name">{keyword.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="sort-filter">
+                       <h4 className="section-title">키워드 2 (정렬)</h4>
+                       <div className="sort-options">
+                           {sortOptions.map(option => (
+                               <button
+                                   key={option.id}
+                                   className={`sort-button ${place.selectedSortOption === option.id ? 'selected' : ''}`}
+                                   onClick={() => selectSortOption(option.id)}
+                               >
+                                   <span className="keyword-emoji">{option.emoji}</span>
+                                   <span className="keyword-name">{option.name}</span>
+                               </button>
+                           ))}
+                       </div>
+                    </div>
+                </div>
+                <hr/>
+            </div>
+        </div>
+    );
+};
+
+export default KeywordFilter;

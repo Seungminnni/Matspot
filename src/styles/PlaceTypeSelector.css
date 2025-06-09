@@ -1,0 +1,60 @@
+.place-type-section {
+    padding: 2rem 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.place-type-selector {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 15px;
+}
+
+.place-type-button {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 12px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 140px;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.place-type-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.place-type-button.selected {
+    background-color: #FF6B6B;
+    color: white;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.place-type-emoji {
+    font-size: 1.4rem;
+}
+
+.place-type-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+} 

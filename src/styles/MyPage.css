@@ -1,0 +1,350 @@
+.mypage-container {
+    display: flex;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+.mypage-sidebar {
+    flex: 0 0 250px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+}
+
+.mypage-sidebar h2 {
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.mypage-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #666;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.nav-item i {
+    width: 20px;
+}
+
+.nav-item:hover {
+    background: #f8f9fa;
+    color: #ff6b6b;
+}
+
+.nav-item.active {
+    background: #ff6b6b;
+    color: white;
+}
+
+.mypage-content {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 프로필 섹션 */
+.profile-header {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.profile-image {
+    position: relative;
+    width: 150px;
+    height: 150px;
+}
+
+.profile-image img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.edit-image-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.profile-info h2 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.profile-info p {
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.profile-edit {
+    margin-top: 30px;
+}
+
+.profile-edit h3 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.profile-form .form-group {
+    margin-bottom: 20px;
+}
+
+.profile-form label {
+    display: block;
+    margin-bottom: 8px;
+    color: #666;
+}
+
+.profile-form input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.save-button {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+
+.save-button:hover {
+    background: #ff5252;
+}
+
+/* 리뷰 섹션 */
+.reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.review-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.review-header {
+    margin-bottom: 15px;
+}
+
+.review-header h4 {
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.rating {
+    color: #ffd700;
+}
+
+.rating .filled {
+    color: #ffd700;
+}
+
+.review-content {
+    color: #666;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.review-date {
+    color: #999;
+    font-size: 14px;
+}
+
+/* 루트 섹션 */
+.routes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.route-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.route-card h4 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.route-places {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.place-tag {
+    background: #f8f9fa;
+    color: #666;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.route-date {
+    color: #999;
+    font-size: 14px;
+}
+
+/* 최근 본 매장 섹션 */
+.recent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.recent-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recent-card h4 {
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.recent-card p {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.view-date {
+    color: #999;
+    font-size: 14px;
+}
+
+/* 공지사항 섹션 */
+.notice-list {
+    margin-top: 20px;
+}
+
+.notice-item {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.notice-item h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.notice-item p {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.notice-date {
+    color: #999;
+    font-size: 14px;
+}
+
+/* 약관 섹션 */
+.terms-list {
+    margin-top: 20px;
+}
+
+.terms-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.terms-item h4 {
+    color: #333;
+}
+
+.view-terms-btn {
+    background: none;
+    border: 1px solid #ff6b6b;
+    color: #ff6b6b;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.view-terms-btn:hover {
+    background: #ff6b6b;
+    color: white;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+    .mypage-container {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .mypage-sidebar {
+        flex: none;
+        width: 100%;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .reviews-grid,
+    .routes-grid,
+    .recent-grid {
+        grid-template-columns: 1fr;
+    }
+} 
