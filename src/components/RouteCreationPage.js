@@ -4,8 +4,10 @@ import '../styles/RouteCreationPage.css'; // 새로운 CSS 파일 (나중에 생
 
 const RouteCreationPage = () => {
     // 여기에 위치 및 키워드 관련 상태를 추가할 수 있습니다.
-    const [center, setCenter] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 시청 기본 위치
-    const [recommendations, setRecommendations] = useState([]); // 추천 장소 목록
+    const [center] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 시청 기본 위치
+    const [recommendations] = useState([]); // 추천 장소 목록
+    
+    // TODO: 향후 setCenter와 setRecommendations 기능이 필요할 때 추가 구현
 
     return (
         <div className="route-creation-page">
