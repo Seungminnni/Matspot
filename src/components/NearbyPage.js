@@ -51,32 +51,32 @@ const NearbyPage = () => {
                         <option value="1000">1km</option>
                     </select>
                 </div>
-            </div>
-            <div className="nearby-list">
+            </div>            <div className="recommendation-list">
                 {isSearching ? (
                     <div className="searching-message">
                         "{searchKeyword}" 검색 중입니다...
                     </div>
                 ) : searchResults.length > 0 ? (
-                    <div className="search-results">
-                        <h3>검색 결과 ({searchResults.length})</h3>
-                        <div className="result-list">
+                    <>
+                        <h2>검색 결과</h2>
+                        <div className="recommendation-results">
                             {searchResults.map((place, index) => (
-                                <div key={index} className="result-item">
+                                <div key={index} className="recommendation-item">
                                     <h4>{place.place_name}</h4>
                                     <p>{place.address_name}</p>
-                                    {place.phone && <p>연락처: {place.phone}</p>}
+                                    {place.phone && <p>📞 {place.phone}</p>}
+                                    {place.category_name && <p>🏷️ {place.category_name}</p>}
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </>
                 ) : searchKeyword ? (
-                    <div className="no-results">
+                    <div className="no-recommendations">
                         검색 결과가 없습니다.
                     </div>
                 ) : (
-                    <div className="searching-message">
-                        주변 맛집을 검색해보세요
+                    <div className="no-recommendations">
+                        주변 맛집을 검색해보세요.
                     </div>
                 )}
             </div>

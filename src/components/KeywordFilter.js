@@ -28,12 +28,10 @@ const KeywordFilter = ({ onCreateRoute, onSearch }) => {
         { id: 'japanese', name: '일식', emoji: '🍣' },
         { id: 'korean', name: '한식', emoji: '🍚' },
         { id: 'dessert', name: '디저트', emoji: '🍰' }
-    ];
-
-    const sortOptions = [
+    ];    const sortOptions = [
         { id: 'distance', name: '거리순', emoji: '📍' },
         { id: 'sns', name: 'SNS 인기순', emoji: '📱' },
-        { id: 'rating', name: '평점순', emoji: '⭐' }
+        { id: 'rating', name: '리뷰수', emoji: '📝' }
     ];
 
     // 새로운 필터 그룹 추가 함수
@@ -76,10 +74,9 @@ const KeywordFilter = ({ onCreateRoute, onSearch }) => {
         setFilterGroups(prevGroups => prevGroups.map(group => {
             if (group.id === groupId) {
                 const updatedGroup = { ...group, selectedSortOption: optionId };
-                
-                // SNS 인기순이나 평점순 선택 시 알림
+                  // SNS 인기순이나 리뷰수 선택 시 알림
                 if (optionId === 'sns' || optionId === 'rating') {
-                    alert(`${optionId === 'sns' ? 'SNS 인기순' : '평점순'}은 아직 구현되지 않았습니다. 거리순을 선택해주세요.`);
+                    alert(`${optionId === 'sns' ? 'SNS 인기순' : '리뷰수'}은 아직 구현되지 않았습니다. 거리순을 선택해주세요.`);
                     return group; // 선택을 취소하고 이전 상태 유지
                 }
                   // 거리순 선택 시 자동 검색을 제거하고 "루트 생성하기" 버튼을 통해서만 검색 실행
@@ -101,9 +98,8 @@ const KeywordFilter = ({ onCreateRoute, onSearch }) => {
             group.selectedKeywords.length > 0 && 
             group.selectedSortOption === 'distance'
         );
-        
-        if (distanceGroups.length === 0) {
-            alert('거리순으로 선택된 식당이 없습니다. SNS 인기순과 평점순은 아직 구현되지 않았습니다.');
+          if (distanceGroups.length === 0) {
+            alert('거리순으로 선택된 식당이 없습니다. SNS 인기순과 리뷰수는 아직 구현되지 않았습니다.');
             return;
         }
         

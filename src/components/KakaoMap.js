@@ -3,25 +3,90 @@ import '../styles/KakaoMap.css';
 
 function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {} }) {
   const [mapError, setMapError] = useState(null);
+  const [searchCenter, setSearchCenter] = useState(null); // 검색 중심 좌표 상태
   const mapRef = useRef(null);
-  const markerRef = useRef(null);
+  const currentLocationMarkerRef = useRef(null); // 현재 위치 마커
+  const customLocationMarkerRef = useRef(null); // 사용자가 클릭한 위치 마커
   const markersRef = useRef([]);
   const placesRef = useRef(null);
   const currentPositionRef = useRef(null);
   const centerRef = useRef(null); // 지도의 현재 중심 좌표를 저장할 ref
   const lastSearchRef = useRef(''); // track last searched keyword to prevent repeats
-  
-  // 마커들을 모두 제거하는 함수
-  const removeAllMarkers = () => {
+    // 마커들을 모두 제거하는 함수 (검색 결과 마커만 제거)
+  const removeSearchMarkers = () => {
     if (markersRef.current.length > 0) {
       markersRef.current.forEach(marker => marker.setMap(null));
       markersRef.current = [];
     }
-    // 현재 위치 마커도 제거 (루트 표시 모드에서는 필요 없을 수 있음)
-    if (markerRef.current) {
-        markerRef.current.setMap(null);
-        markerRef.current = null;
+  };
+
+  // 커스텀 위치 마커 생성/업데이트 함수
+  const setCustomLocationMarker = (position) => {
+    if (!mapRef.current) return;
+
+    // 기존 커스텀 마커 제거
+    if (customLocationMarkerRef.current) {
+      customLocationMarkerRef.current.setMap(null);
     }
+
+    // 파란색 마커 이미지 설정
+    const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+    const imageSize = new window.kakao.maps.Size(24, 35);
+    const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
+
+    // 새 커스텀 마커 생성
+    const marker = new window.kakao.maps.Marker({
+      position: position,
+      image: markerImage
+    });
+    marker.setMap(mapRef.current);
+    customLocationMarkerRef.current = marker;
+
+    // 인포윈도우 생성
+    const infowindow = new window.kakao.maps.InfoWindow({
+      content: '<div style="padding:5px;font-size:12px;color:#1e40af;">검색 위치</div>'
+    });
+
+    // 마커 클릭 이벤트
+    window.kakao.maps.event.addListener(marker, 'click', function() {
+      infowindow.open(mapRef.current, marker);
+    });
+
+    // 검색 중심 좌표 업데이트
+    setSearchCenter(position);
+  };
+
+  // 현재 위치 마커 생성/업데이트 함수
+  const setCurrentLocationMarker = (position) => {
+    if (!mapRef.current) return;
+
+    // 기존 현재 위치 마커 제거
+    if (currentLocationMarkerRef.current) {
+      currentLocationMarkerRef.current.setMap(null);
+    }
+
+    // 빨간색 마커 이미지 설정
+    const imageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMzUiIHZpZXdCb3g9IjAgMCAyNCAzNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDMuNUM3LjMwNTU4IDMuNSAzLjUgNy4zMDU1OCAzLjUgMTJDMy41IDE4LjUgMTIgMzEuNSAxMiAzMS41UzIwLjUgMTguNSAyMC41IDEyQzIwLjUgNy4zMDU1OCAxNi42OTQ0IDMuNSAxMiAzLjVaIiBmaWxsPSIjRUY0NDQ0IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjMiLz4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+';
+    const imageSize = new window.kakao.maps.Size(24, 35);
+    const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
+
+    // 새 현재 위치 마커 생성
+    const marker = new window.kakao.maps.Marker({
+      position: position,
+      image: markerImage
+    });
+    marker.setMap(mapRef.current);
+    currentLocationMarkerRef.current = marker;
+
+    // 인포윈도우 생성
+    const infowindow = new window.kakao.maps.InfoWindow({
+      content: '<div style="padding:5px;font-size:12px;color:#ef4444;">현재 위치</div>'
+    });
+
+    // 마커 클릭 이벤트
+    window.kakao.maps.event.addListener(marker, 'click', function() {
+      infowindow.open(mapRef.current, marker);
+    });
   };
   
   // 장소 검색 함수를 useCallback으로 메모이제이션
@@ -36,23 +101,28 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
     if (!placesRef.current) {
       placesRef.current = new window.kakao.maps.services.Places();
     }
-    
-    // 기존 마커들 제거
+      // 기존 마커들 제거
     // Clear previous error and markers for new search
     setMapError(null);
-    removeAllMarkers();
+    removeSearchMarkers();
     
-    // 현재 지도 중심 좌표 가져오기 (항상 최신 값으로 업데이트)
-    const currentMapCenter = mapRef.current ? mapRef.current.getCenter() : new window.kakao.maps.LatLng(37.5665, 126.9780); // 지도 중심 가져오거나 기본값 사용
-    
-    // 검색 옵션 설정
-    // useCurrentPosition이 true면 현재 위치 사용, 아니면 지도 중심 좌표 사용
-    const searchLocation = useCurrentPosition && currentPositionRef.current ? currentPositionRef.current : currentMapCenter;
-    
-    console.log('검색 위치:', { 
+    // 검색 중심 좌표 결정
+    let searchLocation;
+    if (useCurrentPosition && currentPositionRef.current) {
+      // 현재 위치 버튼으로 검색하는 경우
+      searchLocation = currentPositionRef.current;
+      setSearchCenter(currentPositionRef.current);
+    } else if (searchCenter) {
+      // 커스텀 핀이 설정된 경우
+      searchLocation = searchCenter;
+    } else {
+      // 기본값: 지도 중심 좌표
+      searchLocation = mapRef.current ? mapRef.current.getCenter() : new window.kakao.maps.LatLng(37.5665, 126.9780);
+    }
+      console.log('검색 위치:', { 
       useCurrentPosition, 
       searchLocation: searchLocation?.toString(),
-      mapCenter: currentMapCenter?.toString(),
+      searchCenter: searchCenter?.toString(),
       userPosition: currentPositionRef.current?.toString()
     });
     
@@ -62,8 +132,7 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
       // 음식점 카테고리로 필터링 (FD6: 음식점) - 필요시 주석 처리
       // category_group_code: 'FD6'
     };
-    
-    // 장소 검색 실행
+      // 장소 검색 실행
     placesRef.current.keywordSearch(keyword, (data, status) => {
       console.log('카카오맵 검색 결과:', { status, data, keyword });
       
@@ -117,11 +186,9 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
           }, 0);
         }
         // 검색 결과 콜백으로 전달
-        onSearchComplete(results);
-      } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+        onSearchComplete(results);} else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
         console.warn('검색 결과 없음:', { keyword, location: searchOptions.location, radius: 5000 });
-        const locationMessage = searchOptions.location === currentPositionRef.current ? 
-          '현재 위치' : '현재 지도 화면';
+        const locationMessage = useCurrentPosition ? '현재 위치' : searchCenter ? '선택한 위치' : '현재 지도 화면';
         setMapError(`'${keyword}' 검색 결과가 ${locationMessage} 기준 5km 내에 존재하지 않습니다.`);
         onSearchComplete([]);
       } else if (status === window.kakao.maps.services.Status.ERROR) {
@@ -130,7 +197,7 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
         onSearchComplete([]);
       }
     }, searchOptions);
-  }, [distance, onSearchComplete, currentPositionRef]);
+  }, [distance, onSearchComplete, currentPositionRef, searchCenter]);
   
   // 검색 키워드가 변경될 때 검색 실행 (한 번만 수행)
   useEffect(() => {
@@ -184,8 +251,7 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
       // 지도 생성
       const map = new window.kakao.maps.Map(container, options);
       mapRef.current = map;
-      
-      // 지도 이동 이벤트 리스너 추가
+        // 지도 이동 이벤트 리스너 추가
       window.kakao.maps.event.addListener(map, 'dragend', function() {
         // 지도 중심 좌표 업데이트
         centerRef.current = map.getCenter();
@@ -197,6 +263,15 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
         // 지도 중심 좌표 업데이트
         centerRef.current = map.getCenter();
         console.log('지도 줌 변경:', centerRef.current.toString());
+      });
+
+      // 지도 클릭 이벤트 리스너 추가 (커스텀 핀 설정)
+      window.kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+        const clickPosition = mouseEvent.latLng;
+        console.log('지도 클릭:', clickPosition.toString());
+        
+        // 커스텀 위치 마커 설정
+        setCustomLocationMarker(clickPosition);
       });
       
       // 초기 중심 좌표 설정
@@ -217,28 +292,14 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
             // 현재 위치로 지도 중심 이동
             map.setCenter(currentPosition);
             map.setLevel(5); // 250m 축척으로 지도 레벨 변경
-            
-            // 지도 중심 좌표 업데이트
+              // 지도 중심 좌표 업데이트
             centerRef.current = currentPosition;
             
             // 현재 위치 마커 생성
-            const marker = new window.kakao.maps.Marker({
-              position: currentPosition
-            });
-            marker.setMap(map);
+            setCurrentLocationMarker(currentPosition);
             
-            // 인포윈도우 생성
-            const infowindow = new window.kakao.maps.InfoWindow({
-              content: '<div style="padding:5px;font-size:12px;">현재 위치</div>'
-            });
-            infowindow.open(map, marker);
-            
-            // 마커 클릭 이벤트 등록
-            window.kakao.maps.event.addListener(marker, 'click', function() {
-              infowindow.open(map, marker);
-            });
-            
-            markerRef.current = marker;
+            // 검색 중심을 현재 위치로 초기 설정
+            setSearchCenter(currentPosition);
             
             // 검색어가 있다면 검색 실행
             // 검색어가 있다면 검색 실행
@@ -282,13 +343,15 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
         setMapError('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
       }
     }
-    
-    // 컴포넌트가 언마운트될 때 정리 함수
+      // 컴포넌트가 언마운트될 때 정리 함수
     return () => {
-      if (markerRef.current) {
-        markerRef.current.setMap(null);
+      if (currentLocationMarkerRef.current) {
+        currentLocationMarkerRef.current.setMap(null);
       }
-      removeAllMarkers();
+      if (customLocationMarkerRef.current) {
+        customLocationMarkerRef.current.setMap(null);
+      }
+      removeSearchMarkers();
     };
   }, []);
 
@@ -305,7 +368,6 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
       mapRef.current.setLevel(level);
     }
   }, [distance]);
-
   return (
     <div className="map-container">
       {mapError && (
@@ -313,6 +375,41 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
           <p>{mapError}</p>
         </div>
       )}
+      
+      {/* 지도 컨트롤 버튼들 */}
+      <div className="map-controls">
+        <button
+          className="map-control-button reset"
+          onClick={() => {
+            if (currentPositionRef.current) {
+              // 커스텀 마커 제거하고 현재 위치로 검색 중심 리셋
+              if (customLocationMarkerRef.current) {
+                customLocationMarkerRef.current.setMap(null);
+                customLocationMarkerRef.current = null;
+              }
+              setSearchCenter(currentPositionRef.current);
+              mapRef.current.setCenter(currentPositionRef.current);
+              mapRef.current.setLevel(5);
+            }
+          }}
+          title="현재 위치로 검색 중심 리셋"
+        >
+          📍 현재 위치로
+        </button>
+      </div>
+
+      {/* 현재 검색 중심 정보 표시 */}
+      {searchCenter && (
+        <div className="map-location-info">
+          <div className="location-type">
+            {searchCenter === currentPositionRef.current ? '🔴 현재 위치 기준' : '🔵 선택한 위치 기준'}
+          </div>
+          <div className="location-coords">
+            검색 중심으로 설정됨
+          </div>
+        </div>
+      )}
+
       <div
         id="map"
         style={{

@@ -154,4 +154,69 @@
     padding: 2rem;
     background: #f8f9fa;
     border-radius: 12px;
-} 
+}
+
+/* NearbyPage용 recommendation-list 스타일 */
+.nearby-page .recommendation-list {
+    margin-top: 2rem;
+    margin-bottom: 3rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 1.5rem;
+}
+
+.nearby-page .recommendation-list h2 {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.8rem;
+}
+
+.nearby-page .recommendation-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.nearby-page .recommendation-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.nearby-page .recommendation-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.nearby-page .recommendation-item h4 {
+    color: #ff6b6b;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.nearby-page .recommendation-item p {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+}
+
+.nearby-page .no-recommendations {
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.nearby-page .searching-message {
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
