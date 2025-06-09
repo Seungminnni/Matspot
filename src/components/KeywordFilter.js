@@ -82,17 +82,8 @@ const KeywordFilter = ({ onCreateRoute, onSearch }) => {
                     alert(`${optionId === 'sns' ? 'SNS 인기순' : '평점순'}은 아직 구현되지 않았습니다. 거리순을 선택해주세요.`);
                     return group; // 선택을 취소하고 이전 상태 유지
                 }
-                
-                // 거리순이 선택되고 필요한 조건이 모두 충족되면 자동으로 검색 실행
-                if (optionId === 'distance' && 
-                    updatedGroup.placeType === 'restaurant' && 
-                    updatedGroup.selectedKeywords.length > 0 && 
-                    onSearch) {
-                    
-                    const searchTerm = keywordMap[updatedGroup.selectedKeywords[0]] || updatedGroup.selectedKeywords[0];
-                    console.log('자동 검색 실행:', searchTerm);
-                    onSearch(searchTerm);
-                }
+                  // 거리순 선택 시 자동 검색을 제거하고 "루트 생성하기" 버튼을 통해서만 검색 실행
+                // 자동 검색 로직 제거
                 
                 return updatedGroup;
             } else {

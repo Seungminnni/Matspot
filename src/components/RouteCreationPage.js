@@ -31,9 +31,7 @@ const RouteCreationPage = () => {
         console.log('검색어:', searchTerm);
         setSearchKeyword(searchTerm);
         setSearchCount(prev => prev + 1);
-    };
-
-    // KeywordFilter에서 루트 생성 요청을 받는 함수
+    };    // KeywordFilter에서 루트 생성 요청을 받는 함수
     const handleCreateRoute = (filterGroups) => {
         console.log('루트 생성:', filterGroups);
         
@@ -49,8 +47,17 @@ const RouteCreationPage = () => {
             return;
         }
         
+        // 첫 번째 그룹의 키워드로 검색 실행
+        const firstGroup = distanceGroups[0];
+        const searchTerm = keywordMap[firstGroup.selectedKeywords[0]] || firstGroup.selectedKeywords[0];
+        console.log('루트 생성 - 검색 실행:', searchTerm);
+        
+        // 검색 실행
+        setSearchKeyword(searchTerm);
+        setSearchCount(prev => prev + 1);
+        
         alert(`${distanceGroups.length}개의 장소로 루트가 생성되었습니다!`);
-    };    return (
+    };return (
         <div className="route-creation-page">
             <div className="route-creation-header">
                 <h1>루트 생성하기</h1>
