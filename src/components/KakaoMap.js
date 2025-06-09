@@ -320,7 +320,7 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
       const container = document.getElementById('map');
       
       // 초기 지도 레벨 설정 (기본값: 1km 범위)
-      const mapLevel = 7; // 1km에 대응하는 레벨
+      const mapLevel = 5; // 1km에 대응하는 레벨
 
       const options = {
         center: new window.kakao.maps.LatLng(37.5665, 126.9780), // 서울 시청
