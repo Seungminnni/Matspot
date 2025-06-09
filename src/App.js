@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import SplashScreen from './components/SplashScreen';
 import Header from './components/Header';
-import KeywordFilter from './components/KeywordFilter';
 import Banner from './components/Banner';
 import Footer from './components/Footer';
 import NearbyPage from './components/NearbyPage';
@@ -19,11 +18,9 @@ function App() {
   const handleSplashComplete = () => {
     setShowSplash(false);
   };
-
   const MainContent = () => (
     <>
       <Banner />
-      <KeywordFilter />
       <RouteCreationPage />
     </>
   );

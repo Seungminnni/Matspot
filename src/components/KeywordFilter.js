@@ -7,11 +7,20 @@ const placeTypes = [
     { id: 'cafe', name: '카페', emoji: '☕' },
 ];
 
-const KeywordFilter = ({ onCreateRoute }) => {
+const KeywordFilter = ({ onCreateRoute, onSearch }) => {
     // 각 필터 그룹의 상태를 관리하는 배열
     const [filterGroups, setFilterGroups] = useState([
         { id: Date.now(), placeType: '', selectedKeywords: [], selectedSortOption: null }
     ]);
+
+    // 키워드 매핑
+    const keywordMap = {
+        'western': '양식',
+        'chinese': '중식',
+        'japanese': '일식',
+        'korean': '한식',
+        'dessert': '디저트'
+    };
 
     const keywords = [
         { id: 'western', name: '양식', emoji: '🍝' },
@@ -62,22 +71,54 @@ const KeywordFilter = ({ onCreateRoute }) => {
                 return group;
             }
         }));
-    };
-
-    // 특정 필터 그룹의 키워드2 선택 함수
+    };    // 특정 필터 그룹의 키워드2 선택 함수
     const selectSortOption = (groupId, optionId) => {
-        setFilterGroups(prevGroups => prevGroups.map(group =>
-            group.id === groupId ? { ...group, selectedSortOption: optionId } : group
-        ));
-    };
-
-    // 루트 생성 버튼 클릭 핸들러
+        setFilterGroups(prevGroups => prevGroups.map(group => {
+            if (group.id === groupId) {
+                const updatedGroup = { ...group, selectedSortOption: optionId };
+                
+                // SNS 인기순이나 평점순 선택 시 알림
+                if (optionId === 'sns' || optionId === 'rating') {
+                    alert(`${optionId === 'sns' ? 'SNS 인기순' : '평점순'}은 아직 구현되지 않았습니다. 거리순을 선택해주세요.`);
+                    return group; // 선택을 취소하고 이전 상태 유지
+                }
+                
+                // 거리순이 선택되고 필요한 조건이 모두 충족되면 자동으로 검색 실행
+                if (optionId === 'distance' && 
+                    updatedGroup.placeType === 'restaurant' && 
+                    updatedGroup.selectedKeywords.length > 0 && 
+                    onSearch) {
+                    
+                    const searchTerm = keywordMap[updatedGroup.selectedKeywords[0]] || updatedGroup.selectedKeywords[0];
+                    console.log('자동 검색 실행:', searchTerm);
+                    onSearch(searchTerm);
+                }
+                
+                return updatedGroup;
+            } else {
+                return group;
+            }
+        }));
+    };    // 루트 생성 버튼 클릭 핸들러
     const handleCreateRoute = () => {
         console.log('KeywordFilter: handleCreateRoute function called');
         console.log('루트 생성 요청:', filterGroups);
+        
+        // 거리순이 선택된 그룹들만 필터링
+        const distanceGroups = filterGroups.filter(group => 
+            group.placeType === 'restaurant' && 
+            group.selectedKeywords.length > 0 && 
+            group.selectedSortOption === 'distance'
+        );
+        
+        if (distanceGroups.length === 0) {
+            alert('거리순으로 선택된 식당이 없습니다. SNS 인기순과 평점순은 아직 구현되지 않았습니다.');
+            return;
+        }
+        
         // prop으로 전달받은 함수 호출
         if (onCreateRoute) {
-            onCreateRoute(filterGroups);
+            onCreateRoute(distanceGroups);
         }
     };
 
