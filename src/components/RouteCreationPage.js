@@ -13,6 +13,8 @@ const RouteCreationPage = () => {
     const [placeSearchResults, setPlaceSearchResults] = useState({});
     // 선택된 레스토랑 관리 (각 장소별로 저장된 레스토랑)
     const [selectedRestaurants, setSelectedRestaurants] = useState({});
+    // 각 장소별 검색 중심 좌표 저장
+    const [placeSearchCenters, setPlaceSearchCenters] = useState({});
     // 현재 선택된 레스토랑 (지도에 표시할 핀)
     const [currentSelectedRestaurant, setCurrentSelectedRestaurant] = useState(null);
     // 경로 정보 상태
@@ -36,6 +38,18 @@ const RouteCreationPage = () => {
                 ...prev,
                 [activePlaceId]: results
             }));
+            
+            // 검색 중심 좌표 저장 (지도에서 현재 검색 중심 가져오기)
+            if (mapRef.current && mapRef.current.getSearchCenter) {
+                const currentSearchCenter = mapRef.current.getSearchCenter();
+                if (currentSearchCenter) {
+                    setPlaceSearchCenters(prev => ({
+                        ...prev,
+                        [activePlaceId]: currentSearchCenter
+                    }));
+                    console.log(`장소 ${activePlaceId}의 검색 중심 좌표 저장:`, currentSearchCenter.toString());
+                }
+            }
         }
     };
 
@@ -88,26 +102,29 @@ const RouteCreationPage = () => {
         setRouteInfo(null);
 
         try {
-            // 검색 중심 위치 가져오기 (현재 지도 중심 또는 검색 위치)
-            const searchCenter = mapRef.current.getCenter ? mapRef.current.getCenter() : null;
+            // 1번째 장소의 검색 중심 위치 가져오기
+            const firstPlaceId = Object.keys(selectedRestaurants).sort((a, b) => parseInt(a) - parseInt(b))[0];
+            const searchCenter = placeSearchCenters[firstPlaceId];
             
             if (!searchCenter) {
-                alert('검색 중심 위치를 찾을 수 없습니다.');
+                alert('첫 번째 장소의 검색 중심 위치를 찾을 수 없습니다.');
                 return;
             }
+
+            console.log('루트 생성에 사용할 검색 중심:', searchCenter.toString());
 
             // 1번째 장소와 2번째 장소 순서로 정렬
             const sortedPlaces = Object.keys(selectedRestaurants)
                 .sort((a, b) => parseInt(a) - parseInt(b))
                 .map(placeId => selectedRestaurants[placeId]);
 
-            // 다중 경로 계산 (검색위치 → 1번장소 → 2번장소)
+            // 다중 경로 계산 (1번째 장소 검색위치 → 1번장소 → 2번장소)
             const routeData = await mapRef.current.showMultiRoute(searchCenter, sortedPlaces);
             
             if (routeData) {
                 setRouteInfo({
                     searchCenter: {
-                        place_name: '검색 위치',
+                        place_name: '1번째 장소 검색 위치',
                         lat: searchCenter.getLat(),
                         lng: searchCenter.getLng()
                     },
@@ -185,11 +202,17 @@ const RouteCreationPage = () => {
     const handlePlaceClick = (placeId) => {
         setActivePlaceId(placeId);
         
-        // 선택된 장소의 검색 키워드가 있다면 지도에 반영
+        // 선택된 장소의 검색 결과가 있다면 지도에 반영
         const selectedPlace = places.find(place => place.id === placeId);
         if (selectedPlace && selectedPlace.hasSearched && selectedPlace.searchKeyword) {
             setSearchKeyword(selectedPlace.searchKeyword);
             setSearchCount(prev => prev + 1);
+            
+            // 해당 장소의 검색 중심으로 지도 이동
+            if (placeSearchCenters[placeId] && mapRef.current) {
+                mapRef.current.setCenter(placeSearchCenters[placeId]);
+                console.log(`장소 ${placeId}의 검색 중심으로 지도 이동:`, placeSearchCenters[placeId].toString());
+            }
         } else {
             // 검색 기록이 없으면 지도 초기화
             setSearchKeyword('');

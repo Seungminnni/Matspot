@@ -27,6 +27,14 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     getCenter: () => {
       return mapRef.current ? mapRef.current.getCenter() : null;
     },
+    getSearchCenter: () => {
+      return searchCenter;
+    },
+    setCenter: (position) => {
+      if (mapRef.current && position) {
+        mapRef.current.setCenter(position);
+      }
+    },
     clearRoute: () => {
       clearRoute();
     }
