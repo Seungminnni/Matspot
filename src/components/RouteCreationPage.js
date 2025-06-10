@@ -15,6 +15,10 @@ const RouteCreationPage = () => {
     const [selectedRestaurants, setSelectedRestaurants] = useState({});
     // 현재 선택된 레스토랑 (지도에 표시할 핀)
     const [currentSelectedRestaurant, setCurrentSelectedRestaurant] = useState(null);
+    // 경로 정보 상태
+    const [routeInfo, setRouteInfo] = useState(null);
+    // 경로 생성 로딩 상태
+    const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
     
     const mapRef = useRef(null); // KakaoMap 컴포넌트 참조
 
@@ -66,16 +70,54 @@ const RouteCreationPage = () => {
     };
 
     // 최종 루트 생성 함수
-    const handleCreateFinalRoute = () => {
+    const handleCreateFinalRoute = async () => {
         const savedPlaces = Object.values(selectedRestaurants);
         if (savedPlaces.length < 2) {
             alert('두 개의 장소를 모두 저장해야 루트를 생성할 수 있습니다.');
             return;
         }
 
-        console.log('루트 생성 - 저장된 장소들:', savedPlaces);
-        // 여기에 Kakao 길찾기 API 연동 로직 추가 예정
-        alert('루트가 생성되었습니다! (Kakao 길찾기 API 연동 예정)');
+        // 1번째 장소와 2번째 장소 순서로 경로 생성
+        const sortedPlaces = Object.keys(selectedRestaurants)
+            .sort((a, b) => parseInt(a) - parseInt(b))
+            .map(placeId => selectedRestaurants[placeId]);
+
+        const startPlace = sortedPlaces[0];
+        const endPlace = sortedPlaces[1];
+
+        console.log('루트 생성 시작:', { startPlace, endPlace });
+        setIsCalculatingRoute(true);
+        setRouteInfo(null);
+
+        try {
+            // 지도에서 경로 표시 및 정보 가져오기
+            if (mapRef.current) {
+                const routeData = await mapRef.current.showRoute(startPlace, endPlace);
+                
+                if (routeData) {
+                    setRouteInfo({
+                        startPlace: startPlace,
+                        endPlace: endPlace,
+                        distance: routeData.distance,
+                        duration: routeData.duration,
+                        toll: routeData.toll,
+                        isEstimated: routeData.isEstimated || false
+                    });
+                    
+                    // 성공 메시지
+                    const distanceKm = (routeData.distance / 1000).toFixed(1);
+                    const durationMin = Math.round(routeData.duration / 60);
+                    alert(`루트가 생성되었습니다!\n거리: ${distanceKm}km\n소요시간: ${durationMin}분`);
+                } else {
+                    alert('경로를 찾을 수 없습니다.');
+                }
+            }
+        } catch (error) {
+            console.error('루트 생성 오류:', error);
+            alert('루트 생성 중 오류가 발생했습니다.');
+        } finally {
+            setIsCalculatingRoute(false);
+        }
     };
 
     // KeywordFilter에서 검색 요청을 받는 함수
@@ -270,14 +312,84 @@ const RouteCreationPage = () => {
                 )}
 
                 {/* 두 장소 모두 저장되었을 때 루트 생성 버튼 표시 */}
-                {savedPlacesCount >= 2 && (
+                {savedPlacesCount >= 2 && !routeInfo && (
                     <div className="create-route-button-container">
-                        <button className="final-route-button" onClick={handleCreateFinalRoute}>
-                            루트 생성하기
+                        <button 
+                            className="final-route-button" 
+                            onClick={handleCreateFinalRoute}
+                            disabled={isCalculatingRoute}
+                        >
+                            {isCalculatingRoute ? '경로 계산 중...' : '루트 생성하기'}
                         </button>
                     </div>
                 )}
             </div>
+
+            {/* 생성된 경로 정보 표시 */}
+            {routeInfo && (
+                <div className="route-info-container">
+                    <h3>생성된 루트 정보</h3>
+                    <div className="route-summary">
+                        <div className="route-places">
+                            <div className="route-place start">
+                                <span className="route-number">1</span>
+                                <div className="place-info">
+                                    <h4>{routeInfo.startPlace.place_name}</h4>
+                                    <p>{routeInfo.startPlace.address_name}</p>
+                                </div>
+                            </div>
+                            <div className="route-arrow">➜</div>
+                            <div className="route-place end">
+                                <span className="route-number">2</span>
+                                <div className="place-info">
+                                    <h4>{routeInfo.endPlace.place_name}</h4>
+                                    <p>{routeInfo.endPlace.address_name}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="route-details">
+                            <div className="route-stat">
+                                <span className="stat-icon">📍</span>
+                                <span className="stat-label">거리</span>
+                                <span className="stat-value">{(routeInfo.distance / 1000).toFixed(1)}km</span>
+                            </div>
+                            <div className="route-stat">
+                                <span className="stat-icon">⏱️</span>
+                                <span className="stat-label">소요시간</span>
+                                <span className="stat-value">{Math.round(routeInfo.duration / 60)}분</span>
+                            </div>
+                            {routeInfo.toll > 0 && (
+                                <div className="route-stat">
+                                    <span className="stat-icon">💳</span>
+                                    <span className="stat-label">톨게이트</span>
+                                    <span className="stat-value">{routeInfo.toll.toLocaleString()}원</span>
+                                </div>
+                            )}
+                            {routeInfo.isEstimated && (
+                                <div className="route-notice">
+                                    * 직선거리 기준 예상 시간입니다
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="route-actions">
+                            <button 
+                                className="route-reset-button" 
+                                onClick={() => {
+                                    setRouteInfo(null);
+                                    // 지도에서 경로 제거
+                                    if (mapRef.current) {
+                                        mapRef.current.clearRoute();
+                                    }
+                                }}
+                            >
+                                새로운 루트 만들기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="map-container">
                 <KakaoMap
