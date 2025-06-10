@@ -107,12 +107,13 @@ const RouteCreationPage = () => {
             
             // 2. 음식 키워드가 선택된 경우 추가
             if (selectedKeywords.length > 0) {
-                const foodKeywords = selectedKeywords.map(keyword => keywordMap[keyword] || keyword);
+                const selectedKeyword = selectedKeywords[0]; // 첫 번째(유일한) 키워드만 사용
+                const foodKeyword = keywordMap[selectedKeyword] || selectedKeyword;
                 if (placeType === 'restaurant') {
                     // 맛집 + 음식종류 조합
-                    searchTerm = foodKeywords.join(' ') + ' 맛집';
+                    searchTerm = foodKeyword + ' 맛집';
                 } else {
-                    searchTerm = foodKeywords.join(' ');
+                    searchTerm = foodKeyword;
                 }
             }
             

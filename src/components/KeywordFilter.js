@@ -36,11 +36,12 @@ const KeywordFilter = ({ place, updatePlace, onSearch }) => {
         updatePlace(place.id, { placeType: type });
     };
 
-    // 키워드1 토글 함수
-    const toggleKeyword = (keywordId) => {
-        const newKeywords = place.selectedKeywords.includes(keywordId)
-            ? place.selectedKeywords.filter(id => id !== keywordId)
-            : [...place.selectedKeywords, keywordId];
+    // 키워드1 단일 선택 함수 (중복 선택 불가)
+    const selectKeyword = (keywordId) => {
+        // 이미 선택된 키워드를 다시 클릭하면 선택 해제, 다른 키워드 클릭하면 단일 선택
+        const newKeywords = place.selectedKeywords.includes(keywordId) 
+            ? [] 
+            : [keywordId];
         updatePlace(place.id, { selectedKeywords: newKeywords });
     };
 
@@ -82,7 +83,7 @@ const KeywordFilter = ({ place, updatePlace, onSearch }) => {
                                 <button
                                     key={keyword.id}
                                     className={`keyword-button ${place.selectedKeywords.includes(keyword.id) ? 'selected' : ''}`}
-                                    onClick={() => toggleKeyword(keyword.id)}
+                                    onClick={() => selectKeyword(keyword.id)}
                                 >
                                     {keyword.emoji && <span className="keyword-emoji">{keyword.emoji}</span>}
                                     <span className="keyword-name">{keyword.name}</span>
