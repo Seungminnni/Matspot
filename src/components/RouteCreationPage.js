@@ -410,30 +410,32 @@ const RouteCreationPage = () => {
                         {/* 구간별 상세 정보 */}
                         <div className="route-segments">
                             <h4>구간별 정보</h4>
-                            {routeInfo.segments && routeInfo.segments.map((segment, index) => (
-                                <div key={index} className="route-segment">
-                                    <div className="segment-header">
-                                        <span className="segment-number">{index + 1}</span>
-                                        <span className="segment-title">{segment.from} → {segment.to}</span>
-                                    </div>
-                                    <div className="segment-details">
-                                        <div className="segment-stat">
-                                            <span className="stat-icon">📍</span>
-                                            <span className="stat-value">{(segment.distance / 1000).toFixed(1)}km</span>
+                            <div className="segments-container">
+                                {routeInfo.segments && routeInfo.segments.map((segment, index) => (
+                                    <div key={index} className="route-segment">
+                                        <div className="segment-header">
+                                            <span className="segment-number">{index + 1}</span>
+                                            <span className="segment-title">{segment.from} → {segment.to}</span>
                                         </div>
-                                        <div className="segment-stat">
-                                            <span className="stat-icon">⏱️</span>
-                                            <span className="stat-value">{Math.round(segment.duration / 60)}분</span>
-                                        </div>
-                                        {segment.toll > 0 && (
+                                        <div className="segment-details">
                                             <div className="segment-stat">
-                                                <span className="stat-icon">💳</span>
-                                                <span className="stat-value">{segment.toll.toLocaleString()}원</span>
+                                                <span className="stat-icon">📍</span>
+                                                <span className="stat-value">{(segment.distance / 1000).toFixed(1)}km</span>
                                             </div>
-                                        )}
+                                            <div className="segment-stat">
+                                                <span className="stat-icon">⏱️</span>
+                                                <span className="stat-value">{Math.round(segment.duration / 60)}분</span>
+                                            </div>
+                                            {segment.toll > 0 && (
+                                                <div className="segment-stat">
+                                                    <span className="stat-icon">💳</span>
+                                                    <span className="stat-value">{segment.toll.toLocaleString()}원</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                         
                         {/* 총 합계 정보 */}
