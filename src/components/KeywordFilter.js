@@ -25,6 +25,20 @@ const KeywordFilter = ({ place, updatePlace, onSearch }) => {
         { id: 'dessert', name: '디저트', emoji: '🍰' }
     ];
 
+    // 장소 유형에 따른 키워드 필터링
+    const getAvailableKeywords = () => {
+        if (place.placeType === 'cafe') {
+            // 카페인 경우 디저트만 표시
+            return keywords.filter(keyword => keyword.id === 'dessert');
+        } else if (place.placeType === 'restaurant') {
+            // 식당인 경우 디저트 제외하고 표시
+            return keywords.filter(keyword => keyword.id !== 'dessert');
+        } else {
+            // 장소 유형이 선택되지 않은 경우 모든 키워드 표시
+            return keywords;
+        }
+    };
+
     const sortOptions = [
         { id: 'distance', name: '거리순', emoji: '📍' },
         { id: 'sns', name: 'SNS 인기순', emoji: '📱' },
@@ -33,7 +47,28 @@ const KeywordFilter = ({ place, updatePlace, onSearch }) => {
 
     // 장소 유형 변경 함수
     const handlePlaceTypeChange = (type) => {
-        updatePlace(place.id, { placeType: type });
+        // 장소 유형 변경 시 키워드 자동 조정
+        let newKeywords = [];
+        
+        if (type === 'cafe') {
+            // 카페 선택 시 디저트 자동 선택 (이미 디저트가 선택되어 있다면 유지)
+            if (place.selectedKeywords.includes('dessert')) {
+                newKeywords = ['dessert'];
+            } else {
+                newKeywords = ['dessert']; // 디저트 자동 선택
+            }
+        } else if (type === 'restaurant') {
+            // 식당 선택 시 디저트가 선택되어 있다면 제거
+            newKeywords = place.selectedKeywords.filter(keyword => keyword !== 'dessert');
+        } else {
+            // 장소 유형 해제 시 기존 키워드 유지
+            newKeywords = place.selectedKeywords;
+        }
+        
+        updatePlace(place.id, { 
+            placeType: type,
+            selectedKeywords: newKeywords
+        });
     };
 
     // 키워드1 단일 선택 함수 (중복 선택 불가)
@@ -79,7 +114,7 @@ const KeywordFilter = ({ place, updatePlace, onSearch }) => {
                     <div className="keyword-filter">
                         <h4 className="section-title">키워드 1 (음식 종류)</h4>
                         <div className="keyword-grid">
-                            {keywords.map(keyword => (
+                            {getAvailableKeywords().map(keyword => (
                                 <button
                                     key={keyword.id}
                                     className={`keyword-button ${place.selectedKeywords.includes(keyword.id) ? 'selected' : ''}`}
