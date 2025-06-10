@@ -196,17 +196,19 @@ const RouteCreationPage = () => {
             <div className="recommendation-list">
                 <h2>검색 결과 {activePlace && `- ${activePlace.name}`}</h2>
                 {currentSearchResults.length > 0 ? (
-                    <div className="recommendation-results">
+                    <>
                         <p className="result-count">총 {currentSearchResults.length}개의 결과</p>
-                        {currentSearchResults.map((place, index) => (
-                            <div key={index} className="recommendation-item">
-                                <h4>{place.place_name}</h4>
-                                <p>{place.address_name}</p>
-                                {place.phone && <p>📞 {place.phone}</p>}
-                                {place.category_name && <p>🏷️ {place.category_name}</p>}
-                            </div>
-                        ))}
-                    </div>
+                        <div className="recommendation-results">
+                            {currentSearchResults.map((place, index) => (
+                                <div key={index} className="recommendation-item">
+                                    <h4>{place.place_name}</h4>
+                                    <p>{place.address_name}</p>
+                                    {place.phone && <p>📞 {place.phone}</p>}
+                                    {place.category_name && <p>🏷️ {place.category_name}</p>}
+                                </div>
+                            ))}
+                        </div>
+                    </>
                 ) : (
                     <div className="no-recommendations">
                         {activePlace && activePlace.hasSearched 
