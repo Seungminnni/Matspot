@@ -67,6 +67,18 @@ body {
     border: 2px solid #4caf50;
 }
 
+/* 저장된 장소 스타일 */
+.place-button.saved {
+    background-color: #4caf50;
+    color: white;
+    border: 2px solid #2e7d32;
+}
+
+.place-button.saved.active {
+    background-color: #388e3c;
+    color: white;
+}
+
 .search-indicator {
     font-size: 12px;
 }
@@ -187,6 +199,30 @@ body {
     line-height: 1.4;
 }
 
+/* 선택된 레스토랑 스타일 */
+.recommendation-item.selected {
+    border: 2px solid #ff6b6b;
+    background-color: #fff5f5;
+    cursor: pointer;
+}
+
+.recommendation-item {
+    cursor: pointer;
+    position: relative;
+}
+
+.selection-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ff6b6b;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
 .no-recommendations {
     text-align: center;
     color: #999;
@@ -207,4 +243,106 @@ body {
     width: fit-content;
     margin-left: auto;
     margin-right: auto;
+}
+
+/* 저장된 장소 정보 표시 */
+.saved-place-info {
+    background-color: #e8f5e8;
+    border: 1px solid #4caf50;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.saved-place-info h3 {
+    color: #2e7d32;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.saved-restaurant {
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #c8e6c9;
+}
+
+.saved-restaurant h4 {
+    color: #2e7d32;
+    margin-bottom: 8px;
+}
+
+.saved-restaurant p {
+    margin-bottom: 5px;
+    color: #666;
+}
+
+/* 버튼 컨테이너 */
+.button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* 찾기 버튼 */
+.search-button-container {
+    text-align: center;
+}
+
+.search-button {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.search-button:hover {
+    background-color: #1976d2;
+}
+
+/* 장소 저장 버튼 */
+.save-place-button-container {
+    text-align: center;
+}
+
+.save-place-button {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.save-place-button:hover {
+    background-color: #388e3c;
+}
+
+/* 최종 루트 생성 버튼 */
+.create-route-button-container {
+    text-align: center;
+}
+
+.final-route-button {
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: bold;
+}
+
+.final-route-button:hover {
+    background-color: #e65a5a;
 }

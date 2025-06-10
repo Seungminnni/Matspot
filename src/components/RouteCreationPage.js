@@ -11,6 +11,10 @@ const RouteCreationPage = () => {
     const [activePlaceId, setActivePlaceId] = useState(null);
     // 각 장소별 검색 결과를 저장하는 객체 (key: placeId, value: searchResults)
     const [placeSearchResults, setPlaceSearchResults] = useState({});
+    // 선택된 레스토랑 관리 (각 장소별로 저장된 레스토랑)
+    const [selectedRestaurants, setSelectedRestaurants] = useState({});
+    // 현재 선택된 레스토랑 (지도에 표시할 핀)
+    const [currentSelectedRestaurant, setCurrentSelectedRestaurant] = useState(null);
     
     const mapRef = useRef(null); // KakaoMap 컴포넌트 참조
 
@@ -18,7 +22,7 @@ const RouteCreationPage = () => {
         if (places.length === 0) {
             addPlace();
         }
-    }, []); 
+    }, [places.length]); // addPlace는 의존성에서 제외해도 안전함 (컴포넌트가 리렌더링되어도 같은 함수)
 
     // 검색 결과 처리 함수 - 현재 활성 장소에 결과 저장
     const handleSearchComplete = (results) => {
@@ -29,6 +33,49 @@ const RouteCreationPage = () => {
                 [activePlaceId]: results
             }));
         }
+    };
+
+    // 레스토랑 선택 함수
+    const handleRestaurantSelect = (restaurant) => {
+        console.log('선택된 레스토랑:', restaurant);
+        setCurrentSelectedRestaurant(restaurant);
+        
+        // 지도 중심을 선택된 레스토랑으로 이동하고 해당 핀만 표시
+        if (mapRef.current) {
+            mapRef.current.showSinglePin(restaurant);
+        }
+    };
+
+    // 장소 저장 함수
+    const handleSavePlace = () => {
+        if (!currentSelectedRestaurant || !activePlaceId) {
+            alert('먼저 레스토랑을 선택해주세요.');
+            return;
+        }
+
+        setSelectedRestaurants(prev => ({
+            ...prev,
+            [activePlaceId]: currentSelectedRestaurant
+        }));
+
+        // 장소를 저장됨 상태로 업데이트
+        updatePlace(activePlaceId, { isSaved: true });
+        
+        alert('장소가 저장되었습니다!');
+        setCurrentSelectedRestaurant(null);
+    };
+
+    // 최종 루트 생성 함수
+    const handleCreateFinalRoute = () => {
+        const savedPlaces = Object.values(selectedRestaurants);
+        if (savedPlaces.length < 2) {
+            alert('두 개의 장소를 모두 저장해야 루트를 생성할 수 있습니다.');
+            return;
+        }
+
+        console.log('루트 생성 - 저장된 장소들:', savedPlaces);
+        // 여기에 Kakao 길찾기 API 연동 로직 추가 예정
+        alert('루트가 생성되었습니다! (Kakao 길찾기 API 연동 예정)');
     };
 
     // KeywordFilter에서 검색 요청을 받는 함수
@@ -59,7 +106,8 @@ const RouteCreationPage = () => {
             selectedKeywords: [],
             selectedSortOption: '',
             searchKeyword: '', // 각 장소별 검색 키워드 저장
-            hasSearched: false // 검색 여부 추적
+            hasSearched: false, // 검색 여부 추적
+            isSaved: false // 저장 여부 추적
         };
         setPlaces([...places, newPlace]);
         setActivePlaceId(newPlace.id);
@@ -77,10 +125,20 @@ const RouteCreationPage = () => {
             // 검색 기록이 없으면 지도 초기화
             setSearchKeyword('');
         }
+
+        // 현재 선택된 레스토랑 초기화
+        setCurrentSelectedRestaurant(null);
+        
+        // 이미 저장된 장소가 있다면 해당 핀을 지도에 표시
+        if (selectedRestaurants[placeId]) {
+            if (mapRef.current) {
+                mapRef.current.showSinglePin(selectedRestaurants[placeId]);
+            }
+        }
     };
 
     const handleCreateRoute = () => {
-        console.log('루트 생성 - 모든 장소 선택 결과:', places);
+        console.log('검색 실행 - 현재 활성 장소:', activePlace);
         
         // 활성 장소의 선택된 키워드들로 검색어 생성
         if (activePlace) {
@@ -144,6 +202,10 @@ const RouteCreationPage = () => {
     const activePlace = places.find(place => place.id === activePlaceId);
     // 현재 활성 장소의 검색 결과 가져오기
     const currentSearchResults = activePlaceId ? (placeSearchResults[activePlaceId] || []) : [];
+    // 저장된 장소들의 개수 확인
+    const savedPlacesCount = Object.keys(selectedRestaurants).length;
+    // 현재 활성 장소가 저장되었는지 확인
+    const isCurrentPlaceSaved = activePlaceId && selectedRestaurants[activePlaceId];
 
     return (
         <div className="route-creation-page">
@@ -157,17 +219,18 @@ const RouteCreationPage = () => {
                 {places.map(place => (
                     <button
                         key={place.id}
-                        className={`place-button ${activePlaceId === place.id ? 'active' : ''} ${place.hasSearched ? 'searched' : ''}`}
+                        className={`place-button ${activePlaceId === place.id ? 'active' : ''} ${place.hasSearched ? 'searched' : ''} ${place.isSaved ? 'saved' : ''}`}
                         onClick={() => handlePlaceClick(place.id)}
-                        title={place.hasSearched ? `검색됨: ${place.searchKeyword}` : '미검색'}
+                        title={place.isSaved ? `저장됨: ${selectedRestaurants[place.id]?.place_name}` : place.hasSearched ? `검색됨: ${place.searchKeyword}` : '미검색'}
                     >
                         {place.name}
-                        {place.hasSearched && <span className="search-indicator">🔍</span>}
+                        {place.isSaved && <span className="save-indicator">💾</span>}
+                        {place.hasSearched && !place.isSaved && <span className="search-indicator">🔍</span>}
                     </button>
                 ))}
             </div>
 
-            {activePlace && (
+            {activePlace && !isCurrentPlaceSaved && (
                 <KeywordFilter
                     place={activePlace}
                     updatePlace={updatePlace}
@@ -175,10 +238,45 @@ const RouteCreationPage = () => {
                 />
             )}
 
-            <div className="create-route-button-container">
-                <button className="route-button" onClick={handleCreateRoute}>
-                    루트 생성하기
-                </button>
+            {/* 저장된 장소 표시 */}
+            {isCurrentPlaceSaved && (
+                <div className="saved-place-info">
+                    <h3>{activePlace.name} - 저장된 장소</h3>
+                    <div className="saved-restaurant">
+                        <h4>{selectedRestaurants[activePlaceId].place_name}</h4>
+                        <p>{selectedRestaurants[activePlaceId].address_name}</p>
+                        {selectedRestaurants[activePlaceId].phone && <p>📞 {selectedRestaurants[activePlaceId].phone}</p>}
+                    </div>
+                </div>
+            )}
+
+            {/* 버튼들 */}
+            <div className="button-container">
+                {!isCurrentPlaceSaved && (
+                    <div className="search-button-container">
+                        <button className="search-button" onClick={handleCreateRoute}>
+                            찾기
+                        </button>
+                    </div>
+                )}
+
+                {/* 레스토랑이 선택되었을 때 장소 저장 버튼 표시 */}
+                {currentSelectedRestaurant && !isCurrentPlaceSaved && (
+                    <div className="save-place-button-container">
+                        <button className="save-place-button" onClick={handleSavePlace}>
+                            장소 저장하기
+                        </button>
+                    </div>
+                )}
+
+                {/* 두 장소 모두 저장되었을 때 루트 생성 버튼 표시 */}
+                {savedPlacesCount >= 2 && (
+                    <div className="create-route-button-container">
+                        <button className="final-route-button" onClick={handleCreateFinalRoute}>
+                            루트 생성하기
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="map-container">
@@ -193,30 +291,39 @@ const RouteCreationPage = () => {
             </div>
 
             {/* 검색 결과 목록 */}
-            <div className="recommendation-list">
-                <h2>검색 결과 {activePlace && `- ${activePlace.name}`}</h2>
-                {currentSearchResults.length > 0 ? (
-                    <>
-                        <p className="result-count">총 {currentSearchResults.length}개의 결과</p>
-                        <div className="recommendation-results">
-                            {currentSearchResults.map((place, index) => (
-                                <div key={index} className="recommendation-item">
-                                    <h4>{place.place_name}</h4>
-                                    <p>{place.address_name}</p>
-                                    {place.phone && <p>📞 {place.phone}</p>}
-                                    {place.category_name && <p>🏷️ {place.category_name}</p>}
-                                </div>
-                            ))}
+            {!isCurrentPlaceSaved && (
+                <div className="recommendation-list">
+                    <h2>검색 결과 {activePlace && `- ${activePlace.name}`}</h2>
+                    {currentSearchResults.length > 0 ? (
+                        <>
+                            <p className="result-count">총 {currentSearchResults.length}개의 결과</p>
+                            <div className="recommendation-results">
+                                {currentSearchResults.map((place, index) => (
+                                    <div 
+                                        key={index} 
+                                        className={`recommendation-item ${currentSelectedRestaurant?.place_name === place.place_name ? 'selected' : ''}`}
+                                        onClick={() => handleRestaurantSelect(place)}
+                                    >
+                                        <h4>{place.place_name}</h4>
+                                        <p>{place.address_name}</p>
+                                        {place.phone && <p>📞 {place.phone}</p>}
+                                        {place.category_name && <p>🏷️ {place.category_name}</p>}
+                                        {currentSelectedRestaurant?.place_name === place.place_name && 
+                                            <div className="selection-indicator">✓ 선택됨</div>
+                                        }
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="no-recommendations">
+                            {activePlace && activePlace.hasSearched 
+                                ? '검색 결과가 없습니다.' 
+                                : '키워드를 선택하고 찾기를 눌러 검색해보세요.'}
                         </div>
-                    </>
-                ) : (
-                    <div className="no-recommendations">
-                        {activePlace && activePlace.hasSearched 
-                            ? '검색 결과가 없습니다.' 
-                            : '키워드를 선택하고 루트 생성하기를 눌러 검색해보세요.'}
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

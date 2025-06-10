@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import '../styles/KakaoMap.css';
 
-function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {}, places, activePlace }) {
+const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {}, places, activePlace }, ref) => {
   const [mapError, setMapError] = useState(null);
   const [searchCenter, setSearchCenter] = useState(null); // 검색 중심 좌표 상태
   const mapRef = useRef(null);
@@ -12,6 +12,65 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
   const currentPositionRef = useRef(null);
   const centerRef = useRef(null); // 지도의 현재 중심 좌표를 저장할 ref
   const lastSearchRef = useRef(''); // track last searched keyword to prevent repeats
+  const singlePinMarkerRef = useRef(null); // 단일 핀 마커 참조
+
+  // 부모 컴포넌트에서 호출할 수 있는 메서드들 정의
+  useImperativeHandle(ref, () => ({
+    showSinglePin: (restaurant) => {
+      showSinglePin(restaurant);
+    }
+  }));
+
+  // 단일 핀 표시 함수
+  const showSinglePin = (restaurant) => {
+    if (!mapRef.current || !restaurant) return;
+
+    // 기존 검색 마커들 제거
+    removeSearchMarkers();
+    
+    // 기존 단일 핀 제거
+    if (singlePinMarkerRef.current) {
+      singlePinMarkerRef.current.setMap(null);
+    }
+
+    // 레스토랑 위치 좌표 생성
+    const position = new window.kakao.maps.LatLng(restaurant.y, restaurant.x);
+    
+    // 빨간색 마커 이미지 설정
+    const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
+    const imageSize = new window.kakao.maps.Size(36, 40);
+    const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
+
+    // 단일 핀 마커 생성
+    const marker = new window.kakao.maps.Marker({
+      position: position,
+      image: markerImage
+    });
+    marker.setMap(mapRef.current);
+    singlePinMarkerRef.current = marker;
+
+    // 인포윈도우 생성
+    const infoContent = `
+      <div style="padding:10px;font-size:12px;max-width:200px;">
+        <strong>${restaurant.place_name}</strong><br/>
+        ${restaurant.address_name}<br/>
+        ${restaurant.phone || ''}
+      </div>
+    `;
+    
+    const infowindow = new window.kakao.maps.InfoWindow({
+      content: infoContent
+    });
+
+    // 마커 클릭 시 인포윈도우 표시
+    window.kakao.maps.event.addListener(marker, 'click', function() {
+      infowindow.open(mapRef.current, marker);
+    });
+
+    // 지도 중심을 선택된 레스토랑으로 이동
+    mapRef.current.setCenter(position);
+    mapRef.current.setLevel(3); // 더 가까이 줌인
+  };
     // 마커들을 모두 제거하는 함수 (검색 결과 마커만 제거)
   const removeSearchMarkers = () => {
     if (markersRef.current.length > 0) {
@@ -431,6 +490,9 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
       if (customLocationMarkerRef.current) {
         customLocationMarkerRef.current.setMap(null);
       }
+      if (singlePinMarkerRef.current) {
+        singlePinMarkerRef.current.setMap(null);
+      }
       removeSearchMarkers();
     };
   }, []);
@@ -531,6 +593,6 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
       </button>
     </div>
   );
-}
+});
 
 export default KakaoMap;
