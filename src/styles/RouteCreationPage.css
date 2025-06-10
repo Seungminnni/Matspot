@@ -1,30 +1,130 @@
+html,
+body,
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Noto Sans KR', sans-serif;
+  background-color: #fff;
+}
+
 .route-creation-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    margin-bottom: 100px;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
 }
 
 .route-creation-header {
     text-align: center;
+    margin-bottom: 30px;
+}
+
+.route-creation-header h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.route-creation-header p {
+    font-size: 1rem;
+    margin-bottom: 30px;
+    color: #555;
+}
+
+.places-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.place-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background-color: #f2f2f2;
+    cursor: pointer;
+}
+
+.place-button.active {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+.add-place-button {
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.keyword-filter-container {
+    background-color: #fefefe;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 40px;
+    text-align: left;
+}
+
+.section {
     margin-bottom: 20px;
 }
 
-/* KeywordFilter 컨테이너 스타일 */
-.keyword-filter-container {
-    width: 100%;
-    max-width: 800px;
-    margin-bottom: 24px;
+.section h3 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.button-group button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background-color: #f4f4f4;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.button-group button:hover {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+.route-button {
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.route-button:hover {
+    background-color: #e65a5a;
 }
 
 .map-container {
     width: 100%;
-    height: 400px; /* 지도의 높이 */
+    height: 400px;
     margin-bottom: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    overflow: hidden; /* 지도가 컨테이너 밖으로 나가지 않도록 */
+    overflow: hidden;
 }
 
 .recommendation-list {

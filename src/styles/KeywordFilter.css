@@ -1,7 +1,18 @@
 .filters-container {
     padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%; /* Ensure it takes full available width */
+    /* max-width and margin auto removed, as parent container handles centering */
+}
+
+.filter-section-wrapper {
+    background-color: transparent;
+    border: 1px solid #ddd; /* A slightly darker border for visibility */
+    border-radius: 12px;
+    padding: 30px; /* Increased padding for a larger box */
+    margin-bottom: 0px; /* Reduced margin to move the button even further upwards */
+    box-shadow: none; /* Remove any existing box-shadow if present */
+    width: 100%; /* Take full width of its parent (.filters-container) */
+    /* max-width and margin auto removed, as parent is centering and controlling max-width */
 }
 
 .section-title {
@@ -41,10 +52,13 @@
     justify-content: center;
     gap: 1rem;
     flex-wrap: wrap;
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 15px;
 }
 
 .keyword-button, .sort-button {
-    padding: 0.8rem 1.5rem;
+    padding: 0.8rem 1rem;
     border: none;
     border-radius: 25px;
     background-color: white;
@@ -99,87 +113,6 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.keyword-filter-section {
-    padding: 2rem 1rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: #f8f9fa;
-    border-radius: 15px;
-    margin-bottom: 1rem;
-}
-
-.keyword-filter {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-    padding: 0 1rem;
-}
-
-.keyword-button {
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 25px;
-    background-color: white;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.95rem;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.keyword-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.keyword-button.selected {
-    background-color: #FF6B6B;
-    color: white;
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-}
-
-/* 정렬 옵션 스타일 */
-.sort-options {
-    padding: 2rem 1rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: #f8f9fa;
-    border-radius: 15px;
-    margin-bottom: 1rem;
-}
-
-.sort-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-}
-
-.sort-button {
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 25px;
-    background-color: white;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.95rem;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.sort-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.sort-button.selected {
-    background-color: #FF6B6B;
-    color: white;
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-}
-
 /* 장소 추가 버튼 스타일 */
 .add-group-button {
     display: block; /* 블록 레벨 요소로 만들어 별도의 줄에 표시 */
@@ -206,11 +139,11 @@
 
 /* 순서 표시 제목 스타일 */
 .group-number-heading {
-    font-size: 1.4rem; /* 원하는 글씨 크기로 조절 */
-    margin-top: 20px; /* 위쪽 여백 */
-    margin-bottom: 15px; /* 아래쪽 여백 */
-    text-align: center; /* 가운데 정렬 */
-    color: #333; /* 글자 색상 */
+    font-size: 1.4rem;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    text-align: center;
+    color: #333;
 }
 
 /* 필터 그룹 삭제 버튼 스타일 */

@@ -3,72 +3,77 @@ import KakaoMap from '../components/KakaoMap';
 import '../styles/Nearby.css';
 
 const Nearby = () => {
-    const [places, setPlaces] = useState([
-        { id: 1, name: '첫번째 장소', keywords: [] }
-    ]);
-    const [activePlace, setActivePlace] = useState(1);
-    const [showKeywordModal, setShowKeywordModal] = useState(false);
+    const [center] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 시청 기본 위치
+    const [searchKeyword, setSearchKeyword] = useState(''); // 카카오맵으로 전달할 검색 키워드
+    const [searchCount, setSearchCount] = useState(0); // 검색 카운트
+    const [searchResults, setSearchResults] = useState([]); // 검색 결과
 
-    const handleAddPlace = () => {
-        const newPlace = {
-            id: places.length + 1,
-            name: `${places.length + 1}번째 장소`,
-            keywords: []
-        };
-        setPlaces([...places, newPlace]);
-        setActivePlace(newPlace.id);
+    // 검색 결과 처리 함수
+    const handleSearchComplete = (results) => {
+        console.log('검색 결과:', results);
+        setSearchResults(results);
     };
 
-    const handleKeywordSelect = (keyword) => {
-        setPlaces(places.map(place => {
-            if (place.id === activePlace) {
-                return {
-                    ...place,
-                    keywords: place.keywords.includes(keyword)
-                        ? place.keywords.filter(k => k !== keyword)
-                        : [...place.keywords, keyword]
-                };
-            }
-            return place;
-        }));
+    // 검색 요청 함수
+    const handleSearch = () => {
+        // 입력된 키워드로 검색을 수행합니다.
+        const inputElement = document.querySelector('.search-input');
+        if (inputElement) {
+            const searchTerm = inputElement.value;
+            console.log('검색어:', searchTerm);
+            setSearchKeyword(searchTerm);
+            setSearchCount(prev => prev + 1);
+        }
     };
 
     return (
         <div className="nearby-page">
-            <div className="places-sidebar">
-                <div className="places-tabs">
-                    {places.map(place => (
-                        <button
-                            key={place.id}
-                            className={`place-tab ${activePlace === place.id ? 'active' : ''}`}
-                            onClick={() => setActivePlace(place.id)}
-                        >
-                            {place.name}
-                        </button>
-                    ))}
-                    <button className="add-place-btn" onClick={handleAddPlace}>
-                        <i className="fas fa-plus"></i> 장소 추가
-                    </button>
-                </div>
-                <div className="keywords-section">
-                    <h3>키워드 선택</h3>
-                    <div className="keywords-grid">
-                        {['한식', '중식', '일식', '양식', '카페', '디저트', '분식', '치킨', '피자', '햄버거'].map(keyword => (
-                            <button
-                                key={keyword}
-                                className={`keyword-btn ${
-                                    places.find(p => p.id === activePlace)?.keywords.includes(keyword) ? 'selected' : ''
-                                }`}
-                                onClick={() => handleKeywordSelect(keyword)}
-                            >
-                                {keyword}
-                            </button>
+            <div className="nearby-header">
+                <h1>내 주변 맛집</h1>
+                <p>현재 위치 기준 1km 이내의 맛집을 찾아보세요</p>
+            </div>
+
+            <div className="search-bar-container">
+                <input
+                    type="text"
+                    placeholder="맛집을 검색해보세요"
+                    className="search-input"
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            handleSearch();
+                        }
+                    }}
+                />
+                <button className="search-button" onClick={handleSearch}>검색</button>
+            </div>
+
+            <div className="map-container">
+                <KakaoMap
+                    center={center}
+                    searchKeyword={searchKeyword}
+                    searchCount={searchCount}
+                    onSearchComplete={handleSearchComplete}
+                />
+            </div>
+
+            <div className="search-results-list">
+                <h2>검색 결과</h2>
+                {searchResults.length > 0 ? (
+                    <div className="recommendation-results">
+                        {searchResults.map((place, index) => (
+                            <div key={index} className="recommendation-item">
+                                <h4>{place.place_name}</h4>
+                                <p>{place.address_name}</p>
+                                {place.phone && <p>📞 {place.phone}</p>}
+                                {place.category_name && <p>🏷️ {place.category_name}</p>}
+                            </div>
                         ))}
                     </div>
-                </div>
-            </div>
-            <div className="map-container">
-                <KakaoMap places={places} activePlace={activePlace} />
+                ) : (
+                    <div className="no-recommendations">
+                        {searchKeyword ? '검색 결과가 없습니다.' : '주변 맛집을 검색해보세요.'}
+                    </div>
+                )}
             </div>
         </div>
     );
