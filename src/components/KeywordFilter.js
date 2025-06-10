@@ -143,7 +143,6 @@ const KeywordFilter = ({ place, updatePlace, onSearch }) => {
                        </div>
                     </div>
                 </div>
-                <hr/>
             </div>
         </div>
     );

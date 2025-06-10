@@ -1,5 +1,10 @@
 .filters-container {
-    padding: 2rem;
+    background-color: #fefefe;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 40px;
+    text-align: left;
     width: 100%; /* Ensure it takes full available width */
     /* max-width and margin auto removed, as parent container handles centering */
 }

@@ -168,13 +168,11 @@ const RouteCreationPage = () => {
             </div>
 
             {activePlace && (
-                <div className="keyword-filter-container">
-                    <KeywordFilter
-                        place={activePlace}
-                        updatePlace={updatePlace}
-                        onSearch={handleSearch}
-                    />
-                </div>
+                <KeywordFilter
+                    place={activePlace}
+                    updatePlace={updatePlace}
+                    onSearch={handleSearch}
+                />
             )}
 
             <div className="create-route-button-container">
