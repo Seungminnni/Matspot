@@ -63,13 +63,57 @@ const RouteCreationPage = () => {
 
     const handleCreateRoute = () => {
         console.log('루트 생성 - 모든 장소 선택 결과:', places);
-        // 여기에서 모든 장소의 선택 결과를 기반으로 루트 생성 로직을 추가합니다.
-        // 예시: 선택된 모든 장소의 이름 나열
-        const routeSummary = places.map(place => 
-            `${place.name}: 유형(${place.placeType}), 음식(${place.selectedKeywords.join(', ')}), 정렬(${place.selectedSortOption})`
-        ).join('\n');
-
-        alert(`루트가 생성되었습니다!\n\n${routeSummary}`);
+        
+        // 활성 장소의 선택된 키워드들로 검색어 생성
+        if (activePlace) {
+            const { placeType, selectedKeywords, selectedSortOption } = activePlace;
+            
+            // 키워드 매핑
+            const keywordMap = {
+                'western': '양식',
+                'chinese': '중식',
+                'japanese': '일식',
+                'korean': '한식',
+                'dessert': '디저트'
+            };
+            
+            // 검색어 생성 로직
+            let searchTerm = '';
+            
+            // 1. 장소 유형이 선택된 경우
+            if (placeType === 'restaurant') {
+                searchTerm = '맛집';
+            } else if (placeType === 'cafe') {
+                searchTerm = '카페';
+            }
+            
+            // 2. 음식 키워드가 선택된 경우 추가
+            if (selectedKeywords.length > 0) {
+                const foodKeywords = selectedKeywords.map(keyword => keywordMap[keyword] || keyword);
+                if (placeType === 'restaurant') {
+                    // 맛집 + 음식종류 조합
+                    searchTerm = foodKeywords.join(' ') + ' 맛집';
+                } else {
+                    searchTerm = foodKeywords.join(' ');
+                }
+            }
+            
+            // 3. 기본값 설정
+            if (!searchTerm) {
+                searchTerm = '맛집';
+            }
+            
+            console.log('생성된 검색어:', searchTerm);
+            console.log('선택된 정렬 옵션:', selectedSortOption);
+            
+            // 검색 실행
+            if (searchTerm) {
+                setSearchKeyword(searchTerm);
+                setSearchCount(prev => prev + 1);
+            }
+        } else {
+            alert('먼저 장소를 선택하고 키워드를 설정해주세요.');
+        }
     };
 
     const activePlace = places.find(place => place.id === activePlaceId);
