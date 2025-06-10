@@ -50,6 +50,7 @@ const Nearby = () => {
             <div className="map-container">
                 <KakaoMap
                     center={center}
+                    distance={1000}
                     searchKeyword={searchKeyword}
                     searchCount={searchCount}
                     onSearchComplete={handleSearchComplete}

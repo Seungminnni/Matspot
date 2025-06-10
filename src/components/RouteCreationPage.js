@@ -187,6 +187,7 @@ const RouteCreationPage = () => {
                 <KakaoMap
                     ref={mapRef}
                     center={center}
+                    distance={1000}
                     searchKeyword={searchKeyword}
                     searchCount={searchCount}
                     onSearchComplete={handleSearchComplete}

@@ -125,7 +125,7 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
     
     const searchOptions = {
       location: searchLocation,
-      radius: 1000,
+      radius: distance, // distance prop 사용 (기본값: 1000m)
     };
     
     // 페이지네이션으로 최대 45개 결과 수집
@@ -220,7 +220,8 @@ function KakaoMap({ distance = 1000, searchKeyword = '', searchCount = 0, onSear
       onSearchComplete(allResults);
     } else {
       const locationMessage = useCurrentPosition ? '현재 위치' : searchCenter ? '선택한 위치' : '현재 지도 화면';
-      setMapError(`'${keyword}' 검색 결과가 ${locationMessage} 기준 5km 내에 존재하지 않습니다.`);
+      const distanceKm = distance >= 1000 ? `${distance/1000}km` : `${distance}m`;
+      setMapError(`'${keyword}' 검색 결과가 ${locationMessage} 기준 ${distanceKm} 내에 존재하지 않습니다.`);
       onSearchComplete([]);
     }
   };
