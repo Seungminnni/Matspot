@@ -7,9 +7,10 @@ const RouteCreationPage = () => {
     const [center] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 시청 기본 위치
     const [searchKeyword, setSearchKeyword] = useState(''); // 카카오맵으로 전달할 검색 키워드
     const [searchCount, setSearchCount] = useState(0); // 검색 카운트
-    const [searchResults, setSearchResults] = useState([]); // 검색 결과
     const [places, setPlaces] = useState([]);
     const [activePlaceId, setActivePlaceId] = useState(null);
+    // 각 장소별 검색 결과를 저장하는 객체 (key: placeId, value: searchResults)
+    const [placeSearchResults, setPlaceSearchResults] = useState({});
     
     const mapRef = useRef(null); // KakaoMap 컴포넌트 참조
 
@@ -19,10 +20,15 @@ const RouteCreationPage = () => {
         }
     }, []); 
 
-    // 검색 결과 처리 함수
+    // 검색 결과 처리 함수 - 현재 활성 장소에 결과 저장
     const handleSearchComplete = (results) => {
         console.log('검색 결과:', results);
-        setSearchResults(results);
+        if (activePlaceId) {
+            setPlaceSearchResults(prev => ({
+                ...prev,
+                [activePlaceId]: results
+            }));
+        }
     };
 
     // KeywordFilter에서 검색 요청을 받는 함수
@@ -51,7 +57,9 @@ const RouteCreationPage = () => {
             name: `${places.length + 1}번째 장소`,
             placeType: '',
             selectedKeywords: [],
-            selectedSortOption: ''
+            selectedSortOption: '',
+            searchKeyword: '', // 각 장소별 검색 키워드 저장
+            hasSearched: false // 검색 여부 추적
         };
         setPlaces([...places, newPlace]);
         setActivePlaceId(newPlace.id);
@@ -59,6 +67,16 @@ const RouteCreationPage = () => {
 
     const handlePlaceClick = (placeId) => {
         setActivePlaceId(placeId);
+        
+        // 선택된 장소의 검색 키워드가 있다면 지도에 반영
+        const selectedPlace = places.find(place => place.id === placeId);
+        if (selectedPlace && selectedPlace.hasSearched && selectedPlace.searchKeyword) {
+            setSearchKeyword(selectedPlace.searchKeyword);
+            setSearchCount(prev => prev + 1);
+        } else {
+            // 검색 기록이 없으면 지도 초기화
+            setSearchKeyword('');
+        }
     };
 
     const handleCreateRoute = () => {
@@ -108,6 +126,12 @@ const RouteCreationPage = () => {
             
             // 검색 실행
             if (searchTerm) {
+                // 현재 장소의 검색 키워드와 검색 상태 업데이트
+                updatePlace(activePlace.id, { 
+                    searchKeyword: searchTerm, 
+                    hasSearched: true 
+                });
+                
                 setSearchKeyword(searchTerm);
                 setSearchCount(prev => prev + 1);
             }
@@ -117,6 +141,8 @@ const RouteCreationPage = () => {
     };
 
     const activePlace = places.find(place => place.id === activePlaceId);
+    // 현재 활성 장소의 검색 결과 가져오기
+    const currentSearchResults = activePlaceId ? (placeSearchResults[activePlaceId] || []) : [];
 
     return (
         <div className="route-creation-page">
@@ -130,10 +156,12 @@ const RouteCreationPage = () => {
                 {places.map(place => (
                     <button
                         key={place.id}
-                        className={`place-button ${activePlaceId === place.id ? 'active' : ''}`}
+                        className={`place-button ${activePlaceId === place.id ? 'active' : ''} ${place.hasSearched ? 'searched' : ''}`}
                         onClick={() => handlePlaceClick(place.id)}
+                        title={place.hasSearched ? `검색됨: ${place.searchKeyword}` : '미검색'}
                     >
                         {place.name}
+                        {place.hasSearched && <span className="search-indicator">🔍</span>}
                     </button>
                 ))}
             </div>
@@ -166,10 +194,11 @@ const RouteCreationPage = () => {
 
             {/* 검색 결과 목록 */}
             <div className="recommendation-list">
-                <h2>검색 결과</h2>
-                {searchResults.length > 0 ? (
+                <h2>검색 결과 {activePlace && `- ${activePlace.name}`}</h2>
+                {currentSearchResults.length > 0 ? (
                     <div className="recommendation-results">
-                        {searchResults.map((place, index) => (
+                        <p className="result-count">총 {currentSearchResults.length}개의 결과</p>
+                        {currentSearchResults.map((place, index) => (
                             <div key={index} className="recommendation-item">
                                 <h4>{place.place_name}</h4>
                                 <p>{place.address_name}</p>
@@ -180,7 +209,9 @@ const RouteCreationPage = () => {
                     </div>
                 ) : (
                     <div className="no-recommendations">
-                        {searchKeyword ? '검색 결과가 없습니다.' : '키워드를 선택하고 검색해보세요.'}
+                        {activePlace && activePlace.hasSearched 
+                            ? '검색 결과가 없습니다.' 
+                            : '키워드를 선택하고 루트 생성하기를 눌러 검색해보세요.'}
                     </div>
                 )}
             </div>
