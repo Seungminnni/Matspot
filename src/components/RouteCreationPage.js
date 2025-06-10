@@ -77,44 +77,70 @@ const RouteCreationPage = () => {
             return;
         }
 
-        // 1번째 장소와 2번째 장소 순서로 경로 생성
-        const sortedPlaces = Object.keys(selectedRestaurants)
-            .sort((a, b) => parseInt(a) - parseInt(b))
-            .map(placeId => selectedRestaurants[placeId]);
+        // 검색 중심 위치 확인
+        if (!mapRef.current) {
+            alert('지도가 준비되지 않았습니다.');
+            return;
+        }
 
-        const startPlace = sortedPlaces[0];
-        const endPlace = sortedPlaces[1];
-
-        console.log('루트 생성 시작:', { startPlace, endPlace });
+        console.log('다중 루트 생성 시작...');
         setIsCalculatingRoute(true);
         setRouteInfo(null);
 
         try {
-            // 지도에서 경로 표시 및 정보 가져오기
-            if (mapRef.current) {
-                const routeData = await mapRef.current.showRoute(startPlace, endPlace);
+            // 검색 중심 위치 가져오기 (현재 지도 중심 또는 검색 위치)
+            const searchCenter = mapRef.current.getCenter ? mapRef.current.getCenter() : null;
+            
+            if (!searchCenter) {
+                alert('검색 중심 위치를 찾을 수 없습니다.');
+                return;
+            }
+
+            // 1번째 장소와 2번째 장소 순서로 정렬
+            const sortedPlaces = Object.keys(selectedRestaurants)
+                .sort((a, b) => parseInt(a) - parseInt(b))
+                .map(placeId => selectedRestaurants[placeId]);
+
+            // 다중 경로 계산 (검색위치 → 1번장소 → 2번장소)
+            const routeData = await mapRef.current.showMultiRoute(searchCenter, sortedPlaces);
+            
+            if (routeData) {
+                setRouteInfo({
+                    searchCenter: {
+                        place_name: '검색 위치',
+                        lat: searchCenter.getLat(),
+                        lng: searchCenter.getLng()
+                    },
+                    places: sortedPlaces,
+                    totalDistance: routeData.totalDistance,
+                    totalDuration: routeData.totalDuration,
+                    totalToll: routeData.totalToll,
+                    isEstimated: routeData.isEstimated,
+                    segments: routeData.segments
+                });
                 
-                if (routeData) {
-                    setRouteInfo({
-                        startPlace: startPlace,
-                        endPlace: endPlace,
-                        distance: routeData.distance,
-                        duration: routeData.duration,
-                        toll: routeData.toll,
-                        isEstimated: routeData.isEstimated || false
-                    });
-                    
-                    // 성공 메시지
-                    const distanceKm = (routeData.distance / 1000).toFixed(1);
-                    const durationMin = Math.round(routeData.duration / 60);
-                    const routeType = routeData.isEstimated ? "예상" : "실제";
-                    alert(`루트가 생성되었습니다!\n거리: ${distanceKm}km\n소요시간: ${durationMin}분\n(${routeType} 경로 기준)`);
-                } else {
-                    alert('경로를 찾을 수 없습니다.');
-                }
+                // 성공 메시지
+                const totalDistanceKm = (routeData.totalDistance / 1000).toFixed(1);
+                const totalDurationMin = Math.round(routeData.totalDuration / 60);
+                const routeType = routeData.isEstimated ? "예상" : "실제";
+                
+                let message = `다중 루트가 생성되었습니다!\n\n`;
+                routeData.segments.forEach((segment, index) => {
+                    const segmentDistanceKm = (segment.distance / 1000).toFixed(1);
+                    const segmentDurationMin = Math.round(segment.duration / 60);
+                    message += `${index + 1}. ${segment.from} → ${segment.to}\n`;
+                    message += `   거리: ${segmentDistanceKm}km, 시간: ${segmentDurationMin}분\n\n`;
+                });
+                message += `총 거리: ${totalDistanceKm}km\n`;
+                message += `총 소요시간: ${totalDurationMin}분\n`;
+                message += `(${routeType} 경로 기준)`;
+                
+                alert(message);
+            } else {
+                alert('경로를 찾을 수 없습니다.');
             }
         } catch (error) {
-            console.error('루트 생성 오류:', error);
+            console.error('다중 루트 생성 오류:', error);
             alert('루트 생성 중 오류가 발생했습니다.');
         } finally {
             setIsCalculatingRoute(false);
@@ -331,45 +357,85 @@ const RouteCreationPage = () => {
                 <div className="route-info-container">
                     <h3>생성된 루트 정보</h3>
                     <div className="route-summary">
+                        {/* 다중 경로 정보 표시 */}
                         <div className="route-places">
                             <div className="route-place start">
+                                <span className="route-number">출발</span>
+                                <div className="place-info">
+                                    <h4>{routeInfo.searchCenter.place_name}</h4>
+                                    <p>검색 중심 위치</p>
+                                </div>
+                            </div>
+                            <div className="route-arrow">➜</div>
+                            <div className="route-place middle">
                                 <span className="route-number">1</span>
                                 <div className="place-info">
-                                    <h4>{routeInfo.startPlace.place_name}</h4>
-                                    <p>{routeInfo.startPlace.address_name}</p>
+                                    <h4>{routeInfo.places[0].place_name}</h4>
+                                    <p>{routeInfo.places[0].address_name}</p>
                                 </div>
                             </div>
                             <div className="route-arrow">➜</div>
                             <div className="route-place end">
                                 <span className="route-number">2</span>
                                 <div className="place-info">
-                                    <h4>{routeInfo.endPlace.place_name}</h4>
-                                    <p>{routeInfo.endPlace.address_name}</p>
+                                    <h4>{routeInfo.places[1].place_name}</h4>
+                                    <p>{routeInfo.places[1].address_name}</p>
                                 </div>
                             </div>
                         </div>
                         
+                        {/* 구간별 상세 정보 */}
+                        <div className="route-segments">
+                            <h4>구간별 정보</h4>
+                            {routeInfo.segments && routeInfo.segments.map((segment, index) => (
+                                <div key={index} className="route-segment">
+                                    <div className="segment-header">
+                                        <span className="segment-number">{index + 1}</span>
+                                        <span className="segment-title">{segment.from} → {segment.to}</span>
+                                    </div>
+                                    <div className="segment-details">
+                                        <div className="segment-stat">
+                                            <span className="stat-icon">📍</span>
+                                            <span className="stat-value">{(segment.distance / 1000).toFixed(1)}km</span>
+                                        </div>
+                                        <div className="segment-stat">
+                                            <span className="stat-icon">⏱️</span>
+                                            <span className="stat-value">{Math.round(segment.duration / 60)}분</span>
+                                        </div>
+                                        {segment.toll > 0 && (
+                                            <div className="segment-stat">
+                                                <span className="stat-icon">💳</span>
+                                                <span className="stat-value">{segment.toll.toLocaleString()}원</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {/* 총 합계 정보 */}
                         <div className="route-details">
+                            <h4>총 합계</h4>
                             <div className="route-stat">
                                 <span className="stat-icon">📍</span>
-                                <span className="stat-label">거리</span>
-                                <span className="stat-value">{(routeInfo.distance / 1000).toFixed(1)}km</span>
+                                <span className="stat-label">총 거리</span>
+                                <span className="stat-value">{(routeInfo.totalDistance / 1000).toFixed(1)}km</span>
                             </div>
                             <div className="route-stat">
                                 <span className="stat-icon">⏱️</span>
-                                <span className="stat-label">소요시간</span>
-                                <span className="stat-value">{Math.round(routeInfo.duration / 60)}분</span>
+                                <span className="stat-label">총 소요시간</span>
+                                <span className="stat-value">{Math.round(routeInfo.totalDuration / 60)}분</span>
                             </div>
-                            {routeInfo.toll > 0 && (
+                            {routeInfo.totalToll > 0 && (
                                 <div className="route-stat">
                                     <span className="stat-icon">💳</span>
-                                    <span className="stat-label">톨게이트</span>
-                                    <span className="stat-value">{routeInfo.toll.toLocaleString()}원</span>
+                                    <span className="stat-label">총 톨게이트</span>
+                                    <span className="stat-value">{routeInfo.totalToll.toLocaleString()}원</span>
                                 </div>
                             )}
                             <div className="route-notice">
                                 {routeInfo.isEstimated 
-                                    ? "* 직선거리 기준 예상 시간입니다" 
+                                    ? "* 직선거리 기준 예상 경로입니다" 
                                     : "* 카카오 내비 기준 실제 경로입니다"
                                 }
                             </div>

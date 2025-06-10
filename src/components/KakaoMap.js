@@ -21,6 +21,12 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     showRoute: (startPlace, endPlace) => {
       return showRoute(startPlace, endPlace);
     },
+    showMultiRoute: (searchCenter, places) => {
+      return showMultiRoute(searchCenter, places);
+    },
+    getCenter: () => {
+      return mapRef.current ? mapRef.current.getCenter() : null;
+    },
     clearRoute: () => {
       clearRoute();
     }
@@ -566,6 +572,82 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     }
 
     return null;
+  };
+
+  // 다중 경로 표시 함수 (검색위치 → 1번장소 → 2번장소)
+  const showMultiRoute = async (searchCenter, places) => {
+    if (!mapRef.current || !searchCenter || places.length < 2) return null;
+
+    console.log('다중 경로 표시 요청:', { searchCenter, places });
+
+    try {
+      // 기존 경로 제거
+      clearRoute();
+      
+      // 기존 검색 마커들 제거
+      removeSearchMarkers();
+
+      // 경로 계산할 지점들 정의
+      const startPoint = {
+        x: searchCenter.getLng(),
+        y: searchCenter.getLat(),
+        place_name: '검색 위치'
+      };
+      
+      const waypoint1 = places[0]; // 1번째 장소
+      const waypoint2 = places[1]; // 2번째 장소
+
+      // 각 구간별 경로 계산
+      console.log('구간별 경로 계산 시작...');
+      
+      // 구간 1: 검색위치 → 1번장소
+      const route1Data = await calculateRoute(startPoint, waypoint1);
+      
+      // 구간 2: 1번장소 → 2번장소  
+      const route2Data = await calculateRoute(waypoint1, waypoint2);
+
+      if (route1Data && route2Data) {
+        // 지도에 다중 경로 표시
+        displayMultiRouteOnMap([route1Data, route2Data], [startPoint, waypoint1, waypoint2]);
+        
+        // 경로 정보 반환
+        const totalDistance = route1Data.distance + route2Data.distance;
+        const totalDuration = route1Data.duration + route2Data.duration;
+        const totalToll = (route1Data.toll || 0) + (route2Data.toll || 0);
+        const isEstimated = route1Data.isEstimated || route2Data.isEstimated;
+
+        return {
+          totalDistance,
+          totalDuration,
+          totalToll,
+          isEstimated,
+          segments: [
+            {
+              from: startPoint.place_name,
+              to: waypoint1.place_name,
+              distance: route1Data.distance,
+              duration: route1Data.duration,
+              toll: route1Data.toll || 0,
+              isEstimated: route1Data.isEstimated
+            },
+            {
+              from: waypoint1.place_name,
+              to: waypoint2.place_name,
+              distance: route2Data.distance,
+              duration: route2Data.duration,
+              toll: route2Data.toll || 0,
+              isEstimated: route2Data.isEstimated
+            }
+          ]
+        };
+      }
+    } catch (error) {
+      console.error('다중 경로 표시 오류:', error);
+      setMapError('경로를 찾을 수 없습니다.');
+      return null;
+    }
+
+    return null;
   };  // 카카오 모빌리티 API를 사용한 실제 경로 계산
   const calculateRoute = async (startPlace, endPlace) => {
     const startX = parseFloat(startPlace.x);
@@ -726,6 +808,59 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     mapRef.current.setBounds(bounds);
   };
 
+  // 다중 경로를 지도에 표시
+  const displayMultiRouteOnMap = (routeDataArray, places) => {
+    if (!mapRef.current || routeDataArray.length === 0) return;
+
+    const allCoordinates = [];
+    const bounds = new window.kakao.maps.LatLngBounds();
+
+    // 각 구간별로 다른 색상의 폴리라인 생성
+    const colors = ['#FF0000', '#0000FF']; // 빨강, 파랑
+    
+    routeDataArray.forEach((routeData, index) => {
+      if (routeData.coordinates) {
+        const path = routeData.coordinates.map(coord => 
+          new window.kakao.maps.LatLng(coord.lat, coord.lng)
+        );
+
+        // 폴리라인 생성 (구간별 다른 색상)
+        const polyline = new window.kakao.maps.Polyline({
+          path: path,
+          strokeWeight: 5,
+          strokeColor: colors[index] || '#FF0000',
+          strokeOpacity: 0.8,
+          strokeStyle: 'solid'
+        });
+
+        // 지도에 폴리라인 표시
+        polyline.setMap(mapRef.current);
+        
+        // 폴리라인 참조 저장 (배열로 관리)
+        if (!routePolylineRef.current) {
+          routePolylineRef.current = [];
+        }
+        if (Array.isArray(routePolylineRef.current)) {
+          routePolylineRef.current.push(polyline);
+        } else {
+          routePolylineRef.current = [routePolylineRef.current, polyline];
+        }
+
+        // 바운드 확장
+        path.forEach(point => bounds.extend(point));
+        allCoordinates.push(...routeData.coordinates);
+      }
+    });
+
+    // 다중 경로 마커 생성
+    createMultiRouteMarkers(places);
+
+    // 지도 화면을 모든 경로에 맞게 조정
+    if (allCoordinates.length > 0) {
+      mapRef.current.setBounds(bounds);
+    }
+  };
+
   // 경로 마커 생성
   const createRouteMarkers = (startPlace, endPlace) => {
     // 시작점 마커 (녹색)
@@ -772,11 +907,64 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     routeMarkersRef.current = [startMarker, endMarker];
   };
 
+  // 다중 경로 마커 생성
+  const createMultiRouteMarkers = (places) => {
+    const markers = [];
+    const markerImages = [
+      'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', // 검색위치 - 별 모양
+      'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_blue.png', // 1번장소 - 파란색
+      'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_red.png'   // 2번장소 - 빨간색
+    ];
+
+    places.forEach((place, index) => {
+      const position = new window.kakao.maps.LatLng(place.y, place.x);
+      const marker = new window.kakao.maps.Marker({
+        position: position,
+        image: new window.kakao.maps.MarkerImage(
+          markerImages[index],
+          new window.kakao.maps.Size(36, 37)
+        )
+      });
+      marker.setMap(mapRef.current);
+
+      // 인포윈도우 생성
+      let content = '';
+      if (index === 0) {
+        content = `<div style="padding:10px;font-size:12px;"><strong>출발지</strong><br/>${place.place_name}</div>`;
+      } else if (index === 1) {
+        content = `<div style="padding:10px;font-size:12px;"><strong>1번째 장소</strong><br/>${place.place_name}</div>`;
+      } else if (index === 2) {
+        content = `<div style="padding:10px;font-size:12px;"><strong>2번째 장소</strong><br/>${place.place_name}</div>`;
+      }
+
+      const infoWindow = new window.kakao.maps.InfoWindow({
+        content: content
+      });
+      
+      window.kakao.maps.event.addListener(marker, 'click', function() {
+        infoWindow.open(mapRef.current, marker);
+      });
+
+      markers.push(marker);
+    });
+
+    // 마커 참조 저장
+    routeMarkersRef.current = markers;
+  };
+
   // 경로 정리 함수
   const clearRoute = () => {
-    // 폴리라인 제거
+    // 폴리라인 제거 (단일 또는 다중)
     if (routePolylineRef.current) {
-      routePolylineRef.current.setMap(null);
+      if (Array.isArray(routePolylineRef.current)) {
+        // 다중 폴리라인 제거
+        routePolylineRef.current.forEach(polyline => {
+          if (polyline) polyline.setMap(null);
+        });
+      } else {
+        // 단일 폴리라인 제거
+        routePolylineRef.current.setMap(null);
+      }
       routePolylineRef.current = null;
     }
     
