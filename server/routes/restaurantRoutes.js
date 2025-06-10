@@ -7,6 +7,8 @@ const PYTHON_CRAWLING_API = 'http://localhost:5001';
 
 // 카카오 API 키 (환경변수에서 가져오거나 직접 설정)
 const KAKAO_API_KEY = process.env.KAKAO_API_KEY || 'c6d12eab1ef43ca9745a713e8669183b';
+// 카카오 모빌리티 API 키
+const KAKAO_MOBILITY_API_KEY = process.env.KAKAO_MOBILITY_API_KEY || '402798a9751102f837f8f9d70a7e8a35';
 
 // SNS 맛집 스마트 매칭 API
 router.post('/smart-match', async (req, res) => {
@@ -163,5 +165,148 @@ router.get('/sns-list', async (req, res) => {
         });
     }
 });
+
+// 카카오 모빌리티 길찾기 API
+router.post('/directions', async (req, res) => {
+    try {
+        const { origin, destination, priority = 'RECOMMEND' } = req.body;
+
+        console.log('경로 계산 요청:', { origin, destination, priority });
+
+        // 입력 데이터 검증
+        if (!origin || !destination || 
+            typeof origin.x !== 'number' || typeof origin.y !== 'number' ||
+            typeof destination.x !== 'number' || typeof destination.y !== 'number') {
+            return res.status(400).json({
+                success: false,
+                error: '올바른 출발지와 도착지 좌표를 입력해주세요.'
+            });
+        }
+
+        // 카카오 모빌리티 API 호출
+        const response = await axios.post('https://apis-navi.kakaomobility.com/v1/directions', {
+            origin: {
+                x: origin.x,
+                y: origin.y
+            },
+            destination: {
+                x: destination.x,
+                y: destination.y
+            },
+            priority: priority,
+            car_fuel: "GASOLINE",
+            car_hipass: false,
+            alternatives: false,
+            road_details: false
+        }, {
+            headers: {
+                'Authorization': `KakaoAK ${KAKAO_MOBILITY_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.data.routes && response.data.routes.length > 0) {
+            const route = response.data.routes[0];
+            const summary = route.summary;
+            
+            // 경로 좌표들 추출
+            const coordinates = [];
+            if (route.sections && route.sections.length > 0) {
+                route.sections.forEach(section => {
+                    if (section.roads) {
+                        section.roads.forEach(road => {
+                            if (road.vertexes) {
+                                for (let i = 0; i < road.vertexes.length; i += 2) {
+                                    coordinates.push({
+                                        lng: road.vertexes[i],
+                                        lat: road.vertexes[i + 1]
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 좌표가 없으면 시작점과 끝점만 사용
+            if (coordinates.length === 0) {
+                coordinates.push(
+                    { lng: origin.x, lat: origin.y },
+                    { lng: destination.x, lat: destination.y }
+                );
+            }
+
+            console.log('경로 계산 성공:', {
+                distance: summary.distance,
+                duration: summary.duration,
+                toll: summary.fare?.toll || 0,
+                coordinates: coordinates.length
+            });
+
+            res.json({
+                success: true,
+                route: {
+                    distance: summary.distance,
+                    duration: summary.duration,
+                    toll: summary.fare?.toll || 0,
+                    coordinates: coordinates,
+                    isEstimated: false
+                }
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: '경로를 찾을 수 없습니다.'
+            });
+        }
+
+    } catch (error) {
+        console.error('카카오 모빌리티 API 오류:', error.response?.data || error.message);
+        
+        // API 호출 실패 시 직선거리 기반 예상 경로 반환
+        const { origin, destination } = req.body;
+        
+        if (origin && destination) {
+            const distance = calculateStraightDistance(origin.y, origin.x, destination.y, destination.x);
+            const estimatedRoadDistance = distance * 1.3;
+            const estimatedDuration = Math.round(estimatedRoadDistance / 25 * 3600);
+            const estimatedToll = estimatedRoadDistance > 10 ? 1000 : 0;
+
+            console.log('직선거리 기반 예상 경로로 폴백');
+
+            res.json({
+                success: true,
+                route: {
+                    distance: estimatedRoadDistance * 1000,
+                    duration: estimatedDuration,
+                    toll: estimatedToll,
+                    coordinates: [
+                        { lng: origin.x, lat: origin.y },
+                        { lng: destination.x, lat: destination.y }
+                    ],
+                    isEstimated: true
+                }
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: '경로 계산 중 오류가 발생했습니다.'
+            });
+        }
+    }
+});
+
+// 직선 거리 계산 함수 (Haversine formula)
+function calculateStraightDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // 지구 반지름 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
 
 module.exports = router;

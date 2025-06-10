@@ -107,7 +107,8 @@ const RouteCreationPage = () => {
                     // 성공 메시지
                     const distanceKm = (routeData.distance / 1000).toFixed(1);
                     const durationMin = Math.round(routeData.duration / 60);
-                    alert(`루트가 생성되었습니다!\n거리: ${distanceKm}km\n소요시간: ${durationMin}분`);
+                    const routeType = routeData.isEstimated ? "예상" : "실제";
+                    alert(`루트가 생성되었습니다!\n거리: ${distanceKm}km\n소요시간: ${durationMin}분\n(${routeType} 경로 기준)`);
                 } else {
                     alert('경로를 찾을 수 없습니다.');
                 }
@@ -366,11 +367,12 @@ const RouteCreationPage = () => {
                                     <span className="stat-value">{routeInfo.toll.toLocaleString()}원</span>
                                 </div>
                             )}
-                            {routeInfo.isEstimated && (
-                                <div className="route-notice">
-                                    * 직선거리 기준 예상 시간입니다
-                                </div>
-                            )}
+                            <div className="route-notice">
+                                {routeInfo.isEstimated 
+                                    ? "* 직선거리 기준 예상 시간입니다" 
+                                    : "* 카카오 내비 기준 실제 경로입니다"
+                                }
+                            </div>
                         </div>
                         
                         <div className="route-actions">

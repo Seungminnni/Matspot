@@ -533,7 +533,7 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
 
   // 경로 표시 함수
   const showRoute = async (startPlace, endPlace) => {
-    if (!mapRef.current || !startPlace || !endPlace) return;
+    if (!mapRef.current || !startPlace || !endPlace) return null;
 
     console.log('경로 표시 요청:', { startPlace, endPlace });
 
@@ -551,11 +551,12 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
         // 지도에 경로 표시
         displayRouteOnMap(routeData, startPlace, endPlace);
         
-        // 경로 정보 반환
+        // 경로 정보 반환 (isEstimated 정보도 포함)
         return {
           distance: routeData.distance,
           duration: routeData.duration,
-          toll: routeData.toll || 0
+          toll: routeData.toll || 0,
+          isEstimated: routeData.isEstimated || false
         };
       }
     } catch (error) {
@@ -563,33 +564,110 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       setMapError('경로를 찾을 수 없습니다.');
       return null;
     }
-  };
 
-  // 직선거리 기반 경로 계산
+    return null;
+  };  // 카카오 모빌리티 API를 사용한 실제 경로 계산
   const calculateRoute = async (startPlace, endPlace) => {
     const startX = parseFloat(startPlace.x);
     const startY = parseFloat(startPlace.y);
     const endX = parseFloat(endPlace.x);
     const endY = parseFloat(endPlace.y);
 
+    // 카카오 모빌리티 API 키
+    const KAKAO_MOBILITY_API_KEY = '402798a9751102f837f8f9d70a7e8a35';
+
     try {
-      // 직선 거리 계산
-      const distance = calculateStraightDistance(startY, startX, endY, endX);
+      console.log('카카오 모빌리티 API 호출 시도...');
       
-      // 실제 도로 거리 추정 (직선거리 × 1.3)
-      const estimatedRoadDistance = distance * 1.3;
-      
-      // 평균 속도를 고려한 소요시간 계산 (도심 기준 25km/h)
-      const estimatedDuration = Math.round(estimatedRoadDistance / 25 * 3600);
-      
-      // 톨게이트 비용 추정 (10km 이상시 기본 요금)
-      const estimatedToll = estimatedRoadDistance > 10 ? 1000 : 0;
-      
-      console.log('경로 계산 결과:', {
-        distance: estimatedRoadDistance,
-        duration: estimatedDuration,
-        toll: estimatedToll
+      // GET 방식으로 쿼리 파라미터 구성
+      const params = new URLSearchParams({
+        origin: `${startX},${startY}`,
+        destination: `${endX},${endY}`,
+        priority: 'RECOMMEND',
+        car_fuel: 'GASOLINE',
+        car_hipass: 'false',
+        alternatives: 'false',
+        road_details: 'false'
       });
+
+      // 카카오 모빌리티 길찾기 API 호출 (GET 방식)
+      const response = await fetch(`https://apis-navi.kakaomobility.com/v1/directions?${params}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `KakaoAK ${KAKAO_MOBILITY_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('카카오 모빌리티 API 호출 성공!', data);
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          const summary = route.summary;
+
+          // 실제 경로 좌표들 (더 상세한 경로 표시를 위해)
+          const coordinates = [];
+          if (route.sections && route.sections.length > 0) {
+            route.sections.forEach(section => {
+              if (section.roads) {
+                section.roads.forEach(road => {
+                  if (road.vertexes) {
+                    // vertexes는 [lng, lat, lng, lat, ...] 형태
+                    for (let i = 0; i < road.vertexes.length; i += 2) {
+                      coordinates.push({
+                        lng: road.vertexes[i],
+                        lat: road.vertexes[i + 1]
+                      });
+                    }
+                  }
+                });
+              }
+            });
+          }
+
+          // 좌표가 없으면 시작점과 끝점만 사용
+          if (coordinates.length === 0) {
+            coordinates.push(
+              { lng: startX, lat: startY },
+              { lng: endX, lat: endY }
+            );
+          }
+
+          console.log('실제 경로 계산 성공:', {
+            distance: summary.distance,
+            duration: summary.duration,
+            toll: summary.fare?.toll || 0,
+            coordinates: coordinates.length
+          });
+
+          return {
+            distance: summary.distance, // 미터 단위
+            duration: summary.duration, // 초 단위
+            toll: summary.fare?.toll || 0, // 원 단위
+            coordinates: coordinates,
+            isEstimated: false // 실제 경로임을 표시
+          };
+        }
+      } else {
+        console.error('카카오 모빌리티 API 응답 오류:', response.status, response.statusText);
+        throw new Error(`API 응답 오류: ${response.status}`);
+      }
+      
+    } catch (error) {
+      console.error('카카오 모빌리티 API 호출 실패:', error.message);
+      console.log('실패 원인:', error.name === 'TypeError' ? 'CORS 또는 네트워크 오류' : error.message);
+      
+      // API 호출 실패 시 알림 표시 후 직선거리 기반 계산으로 폴백
+      alert('실제 경로 계산에 실패했습니다.\n직선거리 기준 예상 경로로 표시됩니다.');
+      
+      console.log('직선거리 기반 예상 경로로 폴백합니다.');
+      
+      const distance = calculateStraightDistance(startY, startX, endY, endX);
+      const estimatedRoadDistance = distance * 1.3; // 직선거리의 1.3배로 도로거리 추정
+      const estimatedDuration = Math.round(estimatedRoadDistance / 25 * 3600); // 25km/h 평균속도로 시간 계산
+      const estimatedToll = estimatedRoadDistance > 10 ? 1000 : 0; // 10km 이상시 톨게이트 비용 추정
 
       return {
         distance: estimatedRoadDistance * 1000, // 미터 단위로 변환
@@ -599,12 +677,8 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
           { lng: startX, lat: startY },
           { lng: endX, lat: endY }
         ],
-        isEstimated: true // 추정값임을 표시
+        isEstimated: true // 예상 경로임을 표시
       };
-      
-    } catch (error) {
-      console.error('경로 계산 오류:', error);
-      return null;
     }
   };
 
