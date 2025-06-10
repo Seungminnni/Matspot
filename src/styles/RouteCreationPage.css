@@ -11,7 +11,7 @@ body {
 }
 
 .route-creation-page {
-    max-width: 700px;
+    max-width: 1000px;
     margin: 0 auto;
     padding: 40px 20px;
     text-align: center;
@@ -117,9 +117,10 @@ body {
     border: none;
     padding: 12px 24px;
     font-size: 1rem;
-    border-radius: 24px;
+    border-radius: 12px;
     cursor: pointer;
     transition: 0.2s;
+    margin-bottom: 10px;
 }
 
 .route-button:hover {
@@ -137,7 +138,7 @@ body {
 
 .recommendation-list {
     width: 100%;
-    max-width: 800px;
+    max-width: auto;
     padding: 10px;
     background-color: #f9f9f9;
     border-radius: 8px;
@@ -194,7 +195,6 @@ body {
 
 .result-count {
     text-align: center;
-    margin-bottom: 15px;
     font-weight: bold;
     color: #666;
     font-size: 0.9em;
