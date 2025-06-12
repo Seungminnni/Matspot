@@ -13,5 +13,6 @@ start cmd /k "cd /d C:\Users\seungmin\Desktop\Matspot && npm start"
 
 echo 모든 서비스가 시작되었습니다.
 echo 브라우저에서 http://localhost:3000 접속해 주세요.
-echo 백엔드 API: http://localhost:5000
+echo 백엔드 API: http://localhost:5001
+echo 추천 백엔드: http://localhost:8000
 echo 크롤링 API: http://localhost:5001
