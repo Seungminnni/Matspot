@@ -7,6 +7,8 @@ const MyPage = () => {
     const [activeSection, setActiveSection] = useState('profile');
     const { user, loading } = useAuth();
     const navigate = useNavigate();
+    const [savedRoutes, setSavedRoutes] = useState([]);
+    const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
     
     // 인증되지 않은 사용자는 로그인 페이지로 리디렉션
     useEffect(() => {
@@ -14,6 +16,67 @@ const MyPage = () => {
             navigate('/auth', { state: { isLogin: true } });
         }
     }, [user, loading, navigate]);
+
+    // 저장된 루트 가져오기
+    const fetchSavedRoutes = async () => {
+        if (!user) return;
+        
+        setIsLoadingRoutes(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5001/api/restaurants/my-routes', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                setSavedRoutes(data.routes);
+            } else {
+                console.error('루트 가져오기 실패:', data.error);
+            }
+        } catch (error) {
+            console.error('루트 가져오기 오류:', error);
+        } finally {
+            setIsLoadingRoutes(false);
+        }
+    };
+
+    // 루트 삭제 함수
+    const handleDeleteRoute = async (routeId) => {
+        if (!window.confirm('이 루트를 삭제하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5001/api/restaurants/routes/${routeId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('루트가 삭제되었습니다.');
+                fetchSavedRoutes(); // 목록 새로고침
+            } else {
+                alert(`루트 삭제 실패: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('루트 삭제 오류:', error);
+            alert('루트 삭제 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 컴포넌트 마운트 시 루트 데이터 가져오기
+    useEffect(() => {
+        if (user && activeSection === 'routes') {
+            fetchSavedRoutes();
+        }
+    }, [user, activeSection]);
     
     // 로딩 중일 때 표시
     if (loading) {
@@ -27,9 +90,9 @@ const MyPage = () => {
     
     // 임시 사용자 데이터 (실제로는 API에서 가져온 정보를 사용)
     const userData = {
-        name: '김맛집',
-        email: 'foodie@example.com',
-        profileImage: 'https://via.placeholder.com/150',
+        name: user?.username || '사용자',
+        email: user?.email || 'user@example.com',
+        profileImage: null, // 기본 아바타 사용
         joinDate: '2024-01-01',
         reviews: [
             {
@@ -65,7 +128,9 @@ const MyPage = () => {
                     <div className="profile-section">
                         <div className="profile-header">
                             <div className="profile-image">
-                                <img src={userData.profileImage} alt="프로필" />
+                                <div className="default-avatar">
+                                    <i className="fas fa-user"></i>
+                                </div>
                                 <button className="edit-image-btn">
                                     <i className="fas fa-camera"></i>
                                 </button>
@@ -123,21 +188,67 @@ const MyPage = () => {
                 return (
                     <div className="routes-section">
                         <h3>내가 만든 맛집 루트</h3>
-                        <div className="routes-grid">
-                            {userData.routes.map(route => (
-                                <div key={route.id} className="route-card">
-                                    <h4>{route.name}</h4>
-                                    <div className="route-places">
-                                        {route.places.map((place, index) => (
-                                            <span key={index} className="place-tag">
-                                                {place}
-                                            </span>
-                                        ))}
+                        {isLoadingRoutes ? (
+                            <div className="loading">루트 정보를 불러오는 중...</div>
+                        ) : savedRoutes.length > 0 ? (
+                            <div className="routes-grid">
+                                {savedRoutes.map(route => (
+                                    <div key={route.id} className="route-card">
+                                        <div className="route-header">
+                                            <h4>{route.route_name}</h4>
+                                            <button 
+                                                className="delete-route-btn"
+                                                onClick={() => handleDeleteRoute(route.id)}
+                                                title="루트 삭제"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                        <div className="route-places">
+                                            <div className="route-place">
+                                                <span className="place-label">출발:</span>
+                                                <span className="place-name">{route.search_center_name}</span>
+                                            </div>
+                                            <div className="route-place">
+                                                <span className="place-label">1번째:</span>
+                                                <span className="place-name">{route.place1_name}</span>
+                                                <span className="place-address">{route.place1_address}</span>
+                                            </div>
+                                            <div className="route-place">
+                                                <span className="place-label">2번째:</span>
+                                                <span className="place-name">{route.place2_name}</span>
+                                                <span className="place-address">{route.place2_address}</span>
+                                            </div>
+                                        </div>
+                                        <div className="route-summary">
+                                            <div className="route-stat">
+                                                <span>📍 총 거리: {route.total_distance_km}km</span>
+                                            </div>
+                                            <div className="route-stat">
+                                                <span>⏱️ 총 시간: {route.total_duration_min}분</span>
+                                            </div>
+                                            {route.total_toll > 0 && (
+                                                <div className="route-stat">
+                                                    <span>💳 톨게이트: {route.total_toll.toLocaleString()}원</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="route-date">생성일: {route.created_date}</span>
                                     </div>
-                                    <span className="route-date">생성일: {route.created}</span>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="no-routes">
+                                <p>저장된 루트가 없습니다.</p>
+                                <p>루트 생성 페이지에서 새로운 루트를 만들어보세요!</p>
+                                <button 
+                                    className="create-route-btn"
+                                    onClick={() => navigate('/route-creation')}
+                                >
+                                    루트 만들러 가기
+                                </button>
+                            </div>
+                        )}
                     </div>
                 );
             

@@ -85,6 +85,18 @@
     object-fit: cover;
 }
 
+.default-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: #999;
+}
+
 .edit-image-btn {
     position: absolute;
     bottom: 0;
@@ -237,6 +249,124 @@
     font-size: 14px;
 }
 
+/* 루트 관련 스타일 추가 */
+.routes-grid .route-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.routes-grid .route-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.route-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.route-header h4 {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.delete-route-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.delete-route-btn:hover {
+    opacity: 1;
+}
+
+.route-places {
+    margin-bottom: 15px;
+}
+
+.route-place {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: flex-start;
+}
+
+.place-label {
+    font-weight: 600;
+    color: #666;
+    min-width: 60px;
+}
+
+.place-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.place-address {
+    color: #888;
+    font-size: 14px;
+}
+
+.route-summary {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.route-stat {
+    font-size: 14px;
+    color: #666;
+}
+
+.route-date {
+    color: #888;
+    font-size: 13px;
+}
+
+.no-routes {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.no-routes p {
+    margin-bottom: 10px;
+}
+
+.create-route-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background 0.2s;
+}
+
+.create-route-btn:hover {
+    background: #ff5252;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
 /* 최근 본 매장 섹션 */
 .recent-grid {
     display: grid;
@@ -347,4 +477,4 @@
     .recent-grid {
         grid-template-columns: 1fr;
     }
-} 
+}

@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import KakaoMap from './KakaoMap'; // KakaoMap 컴포넌트 재사용
 import KeywordFilter from './KeywordFilter'; // KeywordFilter 컴포넌트 사용
+import { useAuth } from '../context/AuthContext';
 import '../styles/RouteCreationPage.css';
 
 const RouteCreationPage = () => {
+    const { user } = useAuth();
     const [center] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 시청 기본 위치
     const [searchKeyword, setSearchKeyword] = useState(''); // 카카오맵으로 전달할 검색 키워드
     const [searchCount, setSearchCount] = useState(0); // 검색 카운트
@@ -21,6 +23,10 @@ const RouteCreationPage = () => {
     const [routeInfo, setRouteInfo] = useState(null);
     // 경로 생성 로딩 상태
     const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+    // 루트 저장 관련 상태
+    const [showSaveDialog, setShowSaveDialog] = useState(false);
+    const [routeName, setRouteName] = useState('');
+    const [isSavingRoute, setIsSavingRoute] = useState(false);
     
     const mapRef = useRef(null); // KakaoMap 컴포넌트 참조
 
@@ -161,6 +167,64 @@ const RouteCreationPage = () => {
             alert('루트 생성 중 오류가 발생했습니다.');
         } finally {
             setIsCalculatingRoute(false);
+        }
+    };
+
+    // 루트 저장 함수
+    const handleSaveRoute = async () => {
+        if (!routeName.trim()) {
+            alert('루트 이름을 입력해주세요.');
+            return;
+        }
+
+        if (!routeInfo) {
+            alert('저장할 루트 정보가 없습니다.');
+            return;
+        }
+
+        if (!user) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        setIsSavingRoute(true);
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5001/api/restaurants/save-route', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    routeName: routeName.trim(),
+                    searchCenter: routeInfo.searchCenter,
+                    places: routeInfo.places,
+                    routeInfo: {
+                        totalDistance: routeInfo.totalDistance,
+                        totalDuration: routeInfo.totalDuration,
+                        totalToll: routeInfo.totalToll,
+                        isEstimated: routeInfo.isEstimated
+                    }
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('루트가 성공적으로 저장되었습니다!');
+                setShowSaveDialog(false);
+                setRouteName('');
+            } else {
+                alert(`루트 저장 실패: ${data.error}`);
+            }
+
+        } catch (error) {
+            console.error('루트 저장 오류:', error);
+            alert('루트 저장 중 오류가 발생했습니다.');
+        } finally {
+            setIsSavingRoute(false);
         }
     };
 
@@ -479,6 +543,15 @@ const RouteCreationPage = () => {
                             >
                                 새로운 루트 만들기
                             </button>
+                            
+                            {user && (
+                                <button 
+                                    className="save-route-button"
+                                    onClick={() => setShowSaveDialog(true)}
+                                >
+                                    루트 저장하기
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -564,6 +637,47 @@ const RouteCreationPage = () => {
                                 : '키워드를 선택하고 찾기를 눌러 검색해보세요.'}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* 루트 저장 다이얼로그 */}
+            {showSaveDialog && (
+                <div className="dialog-overlay">
+                    <div className="dialog">
+                        <h3>루트 저장하기</h3>
+                        <div className="dialog-form">
+                            <input
+                                type="text"
+                                placeholder="루트 이름을 입력하세요"
+                                value={routeName}
+                                onChange={(e) => setRouteName(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSaveRoute();
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className="dialog-buttons">
+                            <button 
+                                className="dialog-button secondary"
+                                onClick={() => {
+                                    setShowSaveDialog(false);
+                                    setRouteName('');
+                                }}
+                                disabled={isSavingRoute}
+                            >
+                                취소
+                            </button>
+                            <button 
+                                className="dialog-button primary"
+                                onClick={handleSaveRoute}
+                                disabled={isSavingRoute || !routeName.trim()}
+                            >
+                                {isSavingRoute ? '저장 중...' : '저장'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

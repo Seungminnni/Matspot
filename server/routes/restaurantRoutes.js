@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
+const authMiddleware = require('../middleware/authMiddleware');
 
 // Python 크롤링 API 서버 주소
 const PYTHON_CRAWLING_API = 'http://localhost:5001';
@@ -322,6 +323,153 @@ router.post('/process-search', async (req, res) => {
         res.status(500).json({
             success: false,
             error: '검색 결과 처리 중 오류가 발생했습니다.'
+        });
+    }
+});
+
+// 루트 저장 API
+router.post('/save-route', authMiddleware, async (req, res) => {
+    try {
+        const { routeName, searchCenter, places, routeInfo } = req.body;
+        const userId = req.user.id;
+
+        // 입력 데이터 검증
+        if (!routeName || !searchCenter || !places || places.length < 2) {
+            return res.status(400).json({
+                success: false,
+                error: '루트 이름, 검색 중심, 최소 2개 장소가 필요합니다.'
+            });
+        }
+
+        const db = require('../db');
+        
+        // routes 테이블이 없다면 생성
+        await db.run(`
+            CREATE TABLE IF NOT EXISTS routes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                route_name TEXT NOT NULL,
+                search_center_name TEXT NOT NULL,
+                search_center_lat REAL NOT NULL,
+                search_center_lng REAL NOT NULL,
+                place1_name TEXT NOT NULL,
+                place1_address TEXT NOT NULL,
+                place1_lat REAL NOT NULL,
+                place1_lng REAL NOT NULL,
+                place2_name TEXT NOT NULL,
+                place2_address TEXT NOT NULL,
+                place2_lat REAL NOT NULL,
+                place2_lng REAL NOT NULL,
+                total_distance INTEGER,
+                total_duration INTEGER,
+                total_toll INTEGER,
+                is_estimated BOOLEAN DEFAULT false,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        `);
+
+        // 루트 저장
+        const result = await db.run(`
+            INSERT INTO routes (
+                user_id, route_name, search_center_name, search_center_lat, search_center_lng,
+                place1_name, place1_address, place1_lat, place1_lng,
+                place2_name, place2_address, place2_lat, place2_lng,
+                total_distance, total_duration, total_toll, is_estimated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            userId, routeName, searchCenter.place_name, searchCenter.lat, searchCenter.lng,
+            places[0].place_name, places[0].address_name, parseFloat(places[0].y), parseFloat(places[0].x),
+            places[1].place_name, places[1].address_name, parseFloat(places[1].y), parseFloat(places[1].x),
+            routeInfo?.totalDistance || 0, routeInfo?.totalDuration || 0, routeInfo?.totalToll || 0,
+            routeInfo?.isEstimated || false
+        ]);
+
+        res.json({
+            success: true,
+            message: '루트가 성공적으로 저장되었습니다.',
+            routeId: result.lastID
+        });
+
+    } catch (error) {
+        console.error('루트 저장 오류:', error);
+        res.status(500).json({
+            success: false,
+            error: '루트 저장 중 오류가 발생했습니다.'
+        });
+    }
+});
+
+// 사용자의 저장된 루트 목록 조회 API
+router.get('/my-routes', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const db = require('../db');
+
+        const routes = await db.all(`
+            SELECT 
+                id, route_name, search_center_name, search_center_lat, search_center_lng,
+                place1_name, place1_address, place1_lat, place1_lng,
+                place2_name, place2_address, place2_lat, place2_lng,
+                total_distance, total_duration, total_toll, is_estimated,
+                created_at
+            FROM routes 
+            WHERE user_id = ? 
+            ORDER BY created_at DESC
+        `, [userId]);
+
+        // 거리와 시간을 사용자 친화적 형태로 변환
+        const formattedRoutes = routes.map(route => ({
+            ...route,
+            total_distance_km: route.total_distance ? (route.total_distance / 1000).toFixed(1) : '0.0',
+            total_duration_min: route.total_duration ? Math.round(route.total_duration / 60) : 0,
+            created_date: new Date(route.created_at).toLocaleDateString('ko-KR')
+        }));
+
+        res.json({
+            success: true,
+            routes: formattedRoutes
+        });
+
+    } catch (error) {
+        console.error('루트 목록 조회 오류:', error);
+        res.status(500).json({
+            success: false,
+            error: '루트 목록을 불러오는 중 오류가 발생했습니다.'
+        });
+    }
+});
+
+// 저장된 루트 삭제 API
+router.delete('/routes/:routeId', authMiddleware, async (req, res) => {
+    try {
+        const { routeId } = req.params;
+        const userId = req.user.id;
+        const db = require('../db');
+
+        // 루트가 해당 사용자의 것인지 확인 후 삭제
+        const result = await db.run(`
+            DELETE FROM routes 
+            WHERE id = ? AND user_id = ?
+        `, [routeId, userId]);
+
+        if (result.changes === 0) {
+            return res.status(404).json({
+                success: false,
+                error: '루트를 찾을 수 없거나 삭제 권한이 없습니다.'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: '루트가 성공적으로 삭제되었습니다.'
+        });
+
+    } catch (error) {
+        console.error('루트 삭제 오류:', error);
+        res.status(500).json({
+            success: false,
+            error: '루트 삭제 중 오류가 발생했습니다.'
         });
     }
 });
