@@ -337,7 +337,7 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
         location: { lat: searchLocation.getLat(), lng: searchLocation.getLng() }
       });
 
-      const response = await fetch('/api/restaurants/process-search', {
+      const response = await fetch('http://localhost:5001/api/restaurants/process-search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

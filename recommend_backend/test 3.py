@@ -164,7 +164,7 @@ async def process_and_rank_restaurants(request: SearchRequest):
         scored_places.append(RankedPlace(**p, score=score))
     
     ranked_list = sorted(scored_places, key=lambda p: p.score, reverse=True)
-    return ranked_list[:6]
+    return ranked_list[:45]
 
 # 프론트엔드 요청을 위한 /recommend 엔드포인트 추가
 class RecommendRequest(BaseModel):
