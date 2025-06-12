@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/MyPage.css';
 import { useAuth } from '../context/AuthContext';
+import RouteMapViewer from '../components/RouteMapViewer';
 
 const MyPage = () => {
     const [activeSection, setActiveSection] = useState('profile');
     const { user, loading } = useAuth();
     const navigate = useNavigate();
     const [savedRoutes, setSavedRoutes] = useState([]);
-    const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
+    const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);    const [selectedRoute, setSelectedRoute] = useState(null); // 선택된 루트
+    const routeMapRef = useRef(null); // 루트 지도 참조
     
     // 인증되지 않은 사용자는 로그인 페이지로 리디렉션
     useEffect(() => {
@@ -41,9 +43,7 @@ const MyPage = () => {
         } finally {
             setIsLoadingRoutes(false);
         }
-    };
-
-    // 루트 삭제 함수
+    };    // 루트 삭제 함수
     const handleDeleteRoute = async (routeId) => {
         if (!window.confirm('이 루트를 삭제하시겠습니까?')) {
             return;
@@ -60,7 +60,13 @@ const MyPage = () => {
 
             const data = await response.json();
             if (data.success) {
-                alert('루트가 삭제되었습니다.');
+                alert('루트가 삭제되었습니다.');                // 선택된 루트가 삭제된 경우 선택 해제
+                if (selectedRoute && selectedRoute.id === routeId) {
+                    setSelectedRoute(null);
+                    if (routeMapRef.current) {
+                        routeMapRef.current.clearRoute();
+                    }
+                }
                 fetchSavedRoutes(); // 목록 새로고침
             } else {
                 alert(`루트 삭제 실패: ${data.error}`);
@@ -68,6 +74,20 @@ const MyPage = () => {
         } catch (error) {
             console.error('루트 삭제 오류:', error);
             alert('루트 삭제 중 오류가 발생했습니다.');
+        }
+    };    // 루트 선택 및 지도에 표시
+    const handleSelectRoute = (route) => {
+        setSelectedRoute(route);
+        if (routeMapRef.current) {
+            routeMapRef.current.displayRoute(route);
+        }
+    };
+
+    // 루트 선택 해제
+    const handleClearRoute = () => {
+        setSelectedRoute(null);
+        if (routeMapRef.current) {
+            routeMapRef.current.clearRoute();
         }
     };
 
@@ -182,60 +202,78 @@ const MyPage = () => {
                             ))}
                         </div>
                     </div>
-                );
-            
-            case 'routes':
+                );              case 'routes':
                 return (
                     <div className="routes-section">
                         <h3>내가 만든 맛집 루트</h3>
                         {isLoadingRoutes ? (
                             <div className="loading">루트 정보를 불러오는 중...</div>
                         ) : savedRoutes.length > 0 ? (
-                            <div className="routes-grid">
-                                {savedRoutes.map(route => (
-                                    <div key={route.id} className="route-card">
-                                        <div className="route-header">
-                                            <h4>{route.route_name}</h4>
-                                            <button 
-                                                className="delete-route-btn"
-                                                onClick={() => handleDeleteRoute(route.id)}
-                                                title="루트 삭제"
-                                            >
-                                                🗑️
-                                            </button>
-                                        </div>
-                                        <div className="route-places">
-                                            <div className="route-place">
-                                                <span className="place-label">출발:</span>
-                                                <span className="place-name">{route.search_center_name}</span>
-                                            </div>
-                                            <div className="route-place">
-                                                <span className="place-label">1번째:</span>
-                                                <span className="place-name">{route.place1_name}</span>
-                                                <span className="place-address">{route.place1_address}</span>
-                                            </div>
-                                            <div className="route-place">
-                                                <span className="place-label">2번째:</span>
-                                                <span className="place-name">{route.place2_name}</span>
-                                                <span className="place-address">{route.place2_address}</span>
-                                            </div>
-                                        </div>
-                                        <div className="route-summary">
-                                            <div className="route-stat">
-                                                <span>📍 총 거리: {route.total_distance_km}km</span>
-                                            </div>
-                                            <div className="route-stat">
-                                                <span>⏱️ 총 시간: {route.total_duration_min}분</span>
-                                            </div>
-                                            {route.total_toll > 0 && (
-                                                <div className="route-stat">
-                                                    <span>💳 톨게이트: {route.total_toll.toLocaleString()}원</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <span className="route-date">생성일: {route.created_date}</span>
+                            <div className="routes-container">
+                                <div className="routes-list">
+                                    <div className="routes-list-header">
+                                        <h4>저장된 루트 목록</h4>
+                                        <span className="routes-count">{savedRoutes.length}개의 루트</span>
                                     </div>
-                                ))}
+                                    <div className="routes-grid">
+                                        {savedRoutes.map(route => (
+                                            <div 
+                                                key={route.id} 
+                                                className={`route-card ${selectedRoute?.id === route.id ? 'selected' : ''}`}
+                                                onClick={() => handleSelectRoute(route)}
+                                            >
+                                                <div className="route-header">
+                                                    <h4>{route.route_name}</h4>
+                                                    <button 
+                                                        className="delete-route-btn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // 카드 클릭 이벤트 방지
+                                                            handleDeleteRoute(route.id);
+                                                        }}
+                                                        title="루트 삭제"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                </div>
+                                                <div className="route-places">
+                                                    <div className="route-place">
+                                                        <span className="place-label">출발:</span>
+                                                        <span className="place-name">{route.search_center_name}</span>
+                                                    </div>
+                                                    <div className="route-place">
+                                                        <span className="place-label">1번째:</span>
+                                                        <span className="place-name">{route.place1_name}</span>
+                                                        <span className="place-address">{route.place1_address}</span>
+                                                    </div>
+                                                    <div className="route-place">
+                                                        <span className="place-label">2번째:</span>
+                                                        <span className="place-name">{route.place2_name}</span>
+                                                        <span className="place-address">{route.place2_address}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="route-summary">
+                                                    <div className="route-stat">
+                                                        <span>📍 총 거리: {route.total_distance_km}km</span>
+                                                    </div>
+                                                    <div className="route-stat">
+                                                        <span>⏱️ 총 시간: {route.total_duration_min}분</span>
+                                                    </div>
+                                                    {route.total_toll > 0 && (
+                                                        <div className="route-stat">
+                                                            <span>💳 톨게이트: {route.total_toll.toLocaleString()}원</span>
+                                                        </div>
+                                                    )}                                                </div>
+                                                <span className="route-date">생성일: {route.created_date}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>                                <div className="routes-map-container">
+                                    <RouteMapViewer
+                                        ref={routeMapRef}
+                                        selectedRoute={selectedRoute}
+                                        onClearRoute={handleClearRoute}
+                                    />
+                                </div>
                             </div>
                         ) : (
                             <div className="no-routes">

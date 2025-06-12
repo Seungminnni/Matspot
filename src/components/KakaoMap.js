@@ -692,13 +692,11 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       clearRoute();
       
       // 기존 검색 마커들 제거
-      removeSearchMarkers();
-
-      // 경로 계산할 지점들 정의
+      removeSearchMarkers();      // 경로 계산할 지점들 정의
       const startPoint = {
-        x: searchCenter.getLng(),
-        y: searchCenter.getLat(),
-        place_name: '검색 위치'
+        x: typeof searchCenter.getLng === 'function' ? searchCenter.getLng() : searchCenter.lng || searchCenter.x,
+        y: typeof searchCenter.getLat === 'function' ? searchCenter.getLat() : searchCenter.lat || searchCenter.y,
+        place_name: searchCenter.place_name || '검색 위치'
       };
       
       const waypoint1 = places[0]; // 1번째 장소
