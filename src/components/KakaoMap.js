@@ -29,10 +29,9 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     },
     getSearchCenter: () => {
       return searchCenter;
-    },
-    setCenter: (position) => {
+    },    setCenter: (position) => {
       if (mapRef.current && position) {
-        mapRef.current.setCenter(position);
+        mapRef.current.panTo(position);
       }
     },
     clearRoute: () => {
@@ -43,6 +42,21 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
   // 경로 표시 관련 상태
   const routePolylineRef = useRef(null); // 경로 폴리라인 참조
   const routeMarkersRef = useRef([]); // 경로 마커들 참조
+
+  // 부드러운 지도 이동 및 줌 함수
+  const smoothPanAndZoom = (position, targetLevel) => {
+    if (!mapRef.current) return;
+    
+    // 먼저 부드럽게 이동
+    mapRef.current.panTo(position);
+    
+    // 이동 후 부드럽게 줌 조정 (약간의 지연)
+    setTimeout(() => {
+      if (mapRef.current) {
+        mapRef.current.setLevel(targetLevel);
+      }
+    }, 300); // 300ms 후 줌 변경
+  };
 
   // 단일 핀 표시 함수
   const showSinglePin = (restaurant) => {
@@ -95,11 +109,8 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       setTimeout(() => {
         infowindow.close();
       }, 3000);
-    });
-
-    // 지도 중심을 선택된 레스토랑으로 이동
-    mapRef.current.setCenter(position);
-    mapRef.current.setLevel(3); // 더 가까이 줌인
+    });    // 지도 중심을 선택된 레스토랑으로 부드럽게 이동
+    smoothPanAndZoom(position, 3);
   };
     // 마커들을 모두 제거하는 함수 (검색 결과 마커만 제거)
   const removeSearchMarkers = () => {
@@ -574,11 +585,8 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
             const lng = position.coords.longitude;
             console.log('위치 정보 가져오기 성공:', lat, lng);
             const currentPosition = new window.kakao.maps.LatLng(lat, lng);
-            currentPositionRef.current = currentPosition;
-            
-            // 현재 위치로 지도 중심 이동
-            map.setCenter(currentPosition);
-            map.setLevel(5); // 250m 축척으로 지도 레벨 변경
+            currentPositionRef.current = currentPosition;            // 현재 위치로 지도 중심 부드럽게 이동
+            smoothPanAndZoom(currentPosition, 5);
               // 지도 중심 좌표 업데이트
             centerRef.current = currentPosition;
             
@@ -1200,10 +1208,8 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
               if (customLocationMarkerRef.current) {
                 customLocationMarkerRef.current.setMap(null);
                 customLocationMarkerRef.current = null;
-              }
-              setSearchCenter(currentPositionRef.current);
-              mapRef.current.setCenter(currentPositionRef.current);
-              mapRef.current.setLevel(5);
+              }              setSearchCenter(currentPositionRef.current);
+              smoothPanAndZoom(currentPositionRef.current, 5);
             }
           }}
           title="현재 위치로 검색 중심 리셋"
