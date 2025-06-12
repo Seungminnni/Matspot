@@ -318,18 +318,6 @@
     font-size: 14px;
 }
 
-.route-summary {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-}
-
-.route-stat {
-    font-size: 14px;
-    color: #666;
-}
-
 .route-date {
     color: #888;
     font-size: 13px;

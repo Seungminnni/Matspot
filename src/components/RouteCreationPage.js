@@ -471,7 +471,7 @@ const RouteCreationPage = () => {
                             </div>
                         </div>
                         
-                        {/* 구간별 상세 정보 */}
+                        {/* 구간별 상세 정보를 먼저 표시 */}
                         <div className="route-segments">
                             <h4>구간별 정보</h4>
                             <div className="segments-container">
@@ -502,7 +502,7 @@ const RouteCreationPage = () => {
                             </div>
                         </div>
                         
-                        {/* 총 합계 정보 */}
+                        {/* 총 합계 정보를 나중에 표시 */}
                         <div className="route-details">
                             <h4>총 합계</h4>
                             <div className="route-stat">
