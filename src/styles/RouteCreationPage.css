@@ -762,3 +762,173 @@ body {
         font-size: 0.85rem;
     }
 }
+
+/* 루트 저장 다이얼로그 스타일 */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dialog {
+    background: white;
+    padding: 50px;
+    border-radius: 25px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    animation: slideUp 0.4s ease;
+    border: 3px solid #f8f9fa;
+}
+
+.dialog::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    background: linear-gradient(135deg, #fd79a8, #fdcb6e, #74b9ff, #fd79a8);
+    border-radius: 28px;
+    z-index: -1;
+    animation: gradient 3s ease infinite;
+    background-size: 400% 400%;
+}
+
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.dialog h3 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.dialog-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.dialog-form input {
+    padding: 18px 25px;
+    border: 2px solid #e9ecef;
+    border-radius: 20px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    font-family: inherit;
+}
+
+.dialog-form input:focus {
+    border-color: #fd79a8;
+    box-shadow: 0 0 0 4px rgba(253, 121, 168, 0.15);
+    background: white;
+    transform: translateY(-2px);
+}
+
+.dialog-form input::placeholder {
+    color: #adb5bd;
+    font-weight: 500;
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.dialog-button {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    position: relative;
+    overflow: hidden;
+}
+
+.dialog-button.primary {
+    background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+    color: white;
+    box-shadow: 0 6px 20px rgba(253, 121, 168, 0.3);
+}
+
+.dialog-button.primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.dialog-button.primary:hover::before {
+    left: 100%;
+}
+
+.dialog-button.primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(253, 121, 168, 0.4);
+}
+
+.dialog-button.primary:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.dialog-button.secondary {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+}
+
+.dialog-button.secondary:hover {
+    background: #e9ecef;
+    color: #495057;
+    transform: translateY(-2px);
+}
