@@ -189,28 +189,11 @@ async def recommend_places(request: RecommendRequest):
     return RecommendResponse(recommended_places=recommended_places)
 
 # =======================================================
-#  ★ 로컬 테스트 실행 블록 (가중치 테스트 포함) ★
+#  ★ 서버 실행 블록 ★
 # =======================================================
 if __name__ == "__main__":
-    base_test_data = {
-      "searchResults": [
-        {"id": "9", "place_name": "돈 고기집 하양역 본점", "category_name": "음식점", "phone": "", "address_name": "경북 경산시 하양읍 금락리 300-1", "road_address_name": "경북 경산시 하양읍 하양역길 13 돈 본점", "x": "", "y": "", "place_url": "", "distance": "400"},
-        {"id": "3", "place_name": "손시스시 하양점", "category_name": "음식점", "phone": "", "address_name": "경북 경산시 하양읍 금락리 116-11", "road_address_name": "경북 경산시 하양읍 하양역길 8 손시스시 하양점", "x": "", "y": "", "place_url": "", "distance": "350"},
-        {"id": "2384", "place_name": "몽짬뽕 경산점", "category_name": "음식점", "phone": "", "address_name": "경북 경산시 사동 588-1", "road_address_name": "경북 경산시 원효로42길 27-16 몽짬뽕", "x": "", "y": "", "place_url": "", "distance": "100"}
-      ]
-    }
-    
-    async def run_test(preference: str):
-        test_data = base_test_data.copy()
-        test_data['rankingPreference'] = preference
-        request_body = SearchRequest(**test_data)
-        ranked_list = await process_and_rank_restaurants(request=request_body)
-        print(f"\n\n================ 최종 반환 결과 (우선순위: {preference}) ================")
-        if not ranked_list: print("결과 없음")
-        else:
-            for i, place in enumerate(ranked_list): print(f"[{i+1}위] {place.model_dump()}")
-        print("========================================================\n")
-
-    asyncio.run(run_test('balanced'))
-    asyncio.run(run_test('instagram'))
-    asyncio.run(run_test('reviews'))
+    import uvicorn
+    print("FastAPI 추천 백엔드 서버 시작 중...")
+    print("서버 주소: http://localhost:8000")
+    print("API 문서: http://localhost:8000/docs")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
