@@ -493,6 +493,7 @@ const RouteCreationPage = () => {
                     searchCount={searchCount}
                     onSearchComplete={handleSearchComplete}
                     sortOption={activePlace?.selectedSortOption || 'distance'}
+                    placeType={activePlace?.placeType}
                 />
             </div>
 

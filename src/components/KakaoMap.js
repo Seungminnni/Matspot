@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import '../styles/KakaoMap.css';
 
-const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {}, places, activePlace, sortOption = 'distance' }, ref) => {
+const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {}, places, activePlace, sortOption = 'distance', placeType }, ref) => {
   const [mapError, setMapError] = useState(null);
   const [searchCenter, setSearchCenter] = useState(null); // 검색 중심 좌표 상태
   const mapRef = useRef(null);
@@ -170,6 +170,147 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       infowindow.open(mapRef.current, marker);
     });
   };
+
+  // 장소 유형에 따른 카테고리 코드 반환 함수
+  const getCategoryCode = (placeType) => {
+    switch (placeType) {
+      case 'restaurant':
+        return ['FD6']; // 음식점
+      case 'cafe':
+        return ['CE7', 'CS2']; // 카페 + 편의점/간식
+      default:
+        return null; // 카테고리 필터 없음
+    }
+  };
+
+  // 다중 카테고리 검색 함수
+  const searchMultipleCategories = async (keyword, searchOptions, categoryCodes, useCurrentPosition) => {
+    const allResults = [];
+    const bounds = new window.kakao.maps.LatLngBounds();
+    const seenPlaceIds = new Set(); // 중복 제거를 위한 Set
+
+    console.log('다중 카테고리 검색 시작:', categoryCodes);
+
+    for (const categoryCode of categoryCodes) {
+      try {
+        console.log(`카테고리 ${categoryCode} 검색 중...`);
+        const categoryResults = await searchSingleCategoryWithPagination(keyword, {
+          ...searchOptions,
+          category_group_code: categoryCode
+        });
+
+        // 중복 제거하면서 결과 추가
+        categoryResults.forEach((place) => {
+          if (!seenPlaceIds.has(place.id)) {
+            seenPlaceIds.add(place.id);
+            allResults.push(place);
+          }
+        });
+
+        console.log(`카테고리 ${categoryCode}: ${categoryResults.length}개 결과, 총 ${allResults.length}개`);
+        
+        // 카테고리 간 요청 간격
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (error) {
+        console.error(`카테고리 ${categoryCode} 검색 오류:`, error);
+      }
+    }
+
+    // 마커 생성
+    allResults.forEach((place) => {
+      const position = new window.kakao.maps.LatLng(place.y, place.x);
+      const marker = new window.kakao.maps.Marker({
+        map: mapRef.current,
+        position: position
+      });
+      
+      // 인포윈도우 생성
+      const infowindow = new window.kakao.maps.InfoWindow({
+        content: `<div style="padding:5px;font-size:12px;">${place.place_name}</div>`
+      });
+      
+      // 마커 이벤트 등록
+      window.kakao.maps.event.addListener(marker, 'click', function() {
+        infowindow.open(mapRef.current, marker);
+      });
+      
+      window.kakao.maps.event.addListener(marker, 'mouseover', function() {
+        infowindow.open(mapRef.current, marker);
+      });
+      
+      window.kakao.maps.event.addListener(marker, 'mouseout', function() {
+        infowindow.close();
+      });
+      
+      markersRef.current.push(marker);
+      bounds.extend(position);
+    });
+
+    console.log(`다중 카테고리 검색 완료: 총 ${allResults.length}개 결과 수집`);
+
+    // 검색 결과 처리
+    if (allResults.length > 0) {
+      // 지도 중심 조정
+      if (useCurrentPosition) {
+        mapRef.current.setBounds(bounds);
+      }
+      mapRef.current.setLevel(Math.min(mapRef.current.getLevel(), 7));
+      
+      // 백엔드로 데이터 전송 (기존 로그용)
+      await sendSearchResultsToBackend(allResults, keyword, searchOptions.location);
+      
+      // 정렬 옵션에 따라 추천 백엔드와 통신하여 재정렬
+      const finalResults = await fetchRecommendedResults(allResults, sortOption);
+      
+      // 최종 결과를 콜백으로 전달
+      onSearchComplete(finalResults);
+    } else {
+      const locationMessage = useCurrentPosition ? '현재 위치' : searchCenter ? '선택한 위치' : '현재 지도 화면';
+      const distanceKm = distance >= 1000 ? `${distance/1000}km` : `${distance}m`;
+      setMapError(`'${keyword}' 검색 결과가 ${locationMessage} 기준 ${distanceKm} 내에 존재하지 않습니다.`);
+      onSearchComplete([]);
+    }
+  };
+
+  // 단일 카테고리 페이지네이션 검색 함수
+  const searchSingleCategoryWithPagination = async (keyword, searchOptions) => {
+    const allResults = [];
+    let hasMorePages = true;
+    let currentPage = 1;
+    const maxPages = 2; // 카테고리별 최대 2페이지 (총 30개)
+
+    while (hasMorePages && currentPage <= maxPages) {
+      try {
+        const pageResults = await searchSinglePage(keyword, searchOptions, currentPage);
+        
+        if (pageResults.length === 0) {
+          hasMorePages = false;
+          break;
+        }
+
+        allResults.push(...pageResults);
+
+        // 15개 미만이면 더 이상 페이지가 없음
+        if (pageResults.length < 15) {
+          hasMorePages = false;
+        }
+
+        currentPage++;
+        
+        // 다음 페이지 요청 전 짧은 지연
+        if (hasMorePages && currentPage <= maxPages) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+      } catch (error) {
+        console.error(`페이지 ${currentPage} 검색 오류:`, error);
+        hasMorePages = false;
+      }
+    }
+
+    return allResults;
+  };
+
     // 장소 검색 함수를 useCallback으로 메모이제이션 (45개 결과 pagination 지원)
   const searchPlaces = useCallback((keyword, useCurrentPosition = false) => {
     console.log('검색 시작:', { keyword, distance, useCurrentPosition });
@@ -210,9 +351,24 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       radius: distance, // distance prop 사용 (기본값: 1000m)
     };
     
-    // 페이지네이션으로 최대 45개 결과 수집
-    searchWithPagination(keyword, searchOptions, useCurrentPosition);
-  }, [distance, onSearchComplete, searchCenter]);
+    // 장소 유형에 따른 카테고리 필터 추가
+    const categoryCodes = getCategoryCode(placeType);
+    if (categoryCodes && categoryCodes.length > 0) {
+      if (categoryCodes.length === 1) {
+        // 단일 카테고리인 경우
+        searchOptions.category_group_code = categoryCodes[0];
+        console.log(`카테고리 필터 적용: ${placeType} (${categoryCodes[0]})`);
+        searchWithPagination(keyword, searchOptions, useCurrentPosition);
+      } else {
+        // 여러 카테고리인 경우 각각 검색해서 결과 합치기
+        console.log(`다중 카테고리 필터 적용: ${placeType} (${categoryCodes.join(', ')})`);
+        searchMultipleCategories(keyword, searchOptions, categoryCodes, useCurrentPosition);
+      }
+    } else {
+      // 카테고리 필터 없이 검색
+      searchWithPagination(keyword, searchOptions, useCurrentPosition);
+    }
+  }, [distance, onSearchComplete, searchCenter, placeType]);
 
   // 페이지네이션을 통해 최대 45개 결과를 수집하는 함수
   const searchWithPagination = async (keyword, searchOptions, useCurrentPosition) => {
