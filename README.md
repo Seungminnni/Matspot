@@ -476,3 +476,6 @@ gcloud app browse --service=default
 
 © 2025 Matspot Team. All Rights Reserved.
 © 2025 Matspot Team. All Rights Reserved.
+
+
+cd server; node server.js

@@ -62,6 +62,7 @@
     background: white;
     border-radius: 12px;
     padding: 30px;
+    margin-bottom: 50px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -213,14 +214,14 @@
 .routes-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 40px;
     height: 100%;
     min-height: 600px;
 }
 
 .routes-list {
     flex: 0 0 auto;
-    max-height: 400px;
+    max-height: 450px;
     overflow-y: auto;
     padding-bottom: 10px;
 }
