@@ -472,7 +472,7 @@ gcloud app browse --service=default
 ---
 
 📧 **문의사항**: 개발 관련 문의는 이슈를 등록해주세요.  
-🌟 **별표**: 프로젝트가 도움이 되셨다면 별표를 눌러주세요!
+🌟 **별표**: 프로젝트가 도움이 되셨다면 별표를 눌러주세요!!
 
 © 2025 Matspot Team. All Rights Reserved.
 © 2025 Matspot Team. All Rights Reserved.
