@@ -366,7 +366,7 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
 
   // SNS 인기순으로 검색 결과 재정렬 (추천 백엔드와 통신)
   const fetchRecommendedResults = async (searchResults, sortOption = 'distance') => {
-    // 거리순인 경우 백엔드 통신 없이 원본 반환
+    // 거리순인 경우에만 백엔드 통신 없이 원본 반환
     if (sortOption === 'distance') {
       return searchResults;
     }
@@ -383,6 +383,8 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
         rankingPreference = 'instagram';
       } else if (sortOption === 'rating') {
         rankingPreference = 'reviews';
+      } else if (sortOption === 'balanced') {
+        rankingPreference = 'balanced';
       }
 
       const response = await fetch(backendUrl, {

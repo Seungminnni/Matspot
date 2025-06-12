@@ -42,7 +42,8 @@ const KeywordFilter = ({ place, updatePlace, onSearch }) => {
     const sortOptions = [
         { id: 'distance', name: '거리순', emoji: '📍' },
         { id: 'sns', name: 'SNS 인기순', emoji: '📱' },
-        { id: 'rating', name: '리뷰수', emoji: '📝' }
+        { id: 'rating', name: '리뷰수', emoji: '📝' },
+        { id: 'balanced', name: '종합점수', emoji: '⭐' }
     ];
 
     // 장소 유형 변경 함수

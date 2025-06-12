@@ -126,8 +126,8 @@ async def process_and_rank_restaurants(request: SearchRequest):
 
     WEIGHT_PRESETS = {
         'distance':  {'distance': 0.45, 'reviews': 0.3, 'mentions': 0.25},
-        'reviews':   {'distance': 0.2, 'reviews': 0.6, 'mentions': 0.2},
-        'instagram': {'distance': 0.2, 'reviews': 0.35, 'mentions': 0.45},
+        'reviews':   {'distance': 0.2, 'reviews': 0.8, 'mentions': 0.0},
+        'instagram': {'distance': 0.2, 'reviews': 0.0, 'mentions': 0.8},
         'balanced':  {'distance': 0.33, 'reviews': 0.34, 'mentions': 0.33}
     }
     weights = WEIGHT_PRESETS.get(ranking_preference, WEIGHT_PRESETS['balanced'])

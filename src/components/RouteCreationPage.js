@@ -507,6 +507,9 @@ const RouteCreationPage = () => {
                         {activePlace?.selectedSortOption === 'rating' && currentSearchResults.length > 0 && (
                             <span className="sort-indicator">💬 리뷰수순</span>
                         )}
+                        {activePlace?.selectedSortOption === 'balanced' && currentSearchResults.length > 0 && (
+                            <span className="sort-indicator">⭐ 종합점수순</span>
+                        )}
                     </div>
                     {currentSearchResults.length > 0 ? (
                         <>
