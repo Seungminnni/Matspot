@@ -142,11 +142,24 @@ body {
 
 .map-container {
     width: 100%;
-    height: 400px;
+    height: 500px;
     margin-bottom: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
     overflow: hidden;
+}
+
+/* 모바일 대응 - 지도 컨테이너 높이 조정 */
+@media (max-width: 768px) {
+    .map-container {
+        height: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    .map-container {
+        height: 350px;
+    }
 }
 
 .recommendation-list {
