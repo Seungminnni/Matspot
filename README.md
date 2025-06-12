@@ -19,6 +19,7 @@
 - [데이터베이스 구조](#데이터베이스-구조)
 - [프로젝트 구조](#프로젝트-구조)
 - [개발 가이드](#개발-가이드)
+- [GCP 배포 가이드](#gcp-배포-가이드)
 
 ## 🍳 프로젝트 소개
 
@@ -360,6 +361,103 @@ KAKAO_MOBILITY_API_KEY=402798a9751102f837f8f9d70a7e8a35
 - **검색 속도**: 평균 2-3초 (카카오 API + DB 조회)
 - **추천 정확도**: SNS 언급수와 리뷰수 기반 가중치 적용
 - **사용자 경험**: 직관적인 UI와 실시간 피드백 제공
+
+## 🚀 GCP 배포 가이드
+
+### Google Cloud Platform 배포 준비
+
+#### 1. GCP 프로젝트 설정
+```bash
+# Google Cloud SDK 설치 후
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+```
+
+#### 2. App Engine 설정
+```bash
+# App Engine 애플리케이션 생성
+gcloud app create --region=asia-northeast3  # 서울 리전
+```
+
+#### 3. 프로젝트 빌드 및 배포 파일 생성
+
+**app.yaml** (루트 디렉토리에 생성):
+```yaml
+runtime: nodejs20
+
+env_variables:
+  NODE_ENV: production
+  PORT: 8080
+
+handlers:
+  # React 빌드된 정적 파일 서빙
+  - url: /static
+    static_dir: build/static
+    
+  # 모든 API 요청을 Express 서버로 라우팅
+  - url: /api/.*
+    script: auto
+    
+  # 모든 다른 요청을 React 앱으로 라우팅
+  - url: /.*
+    static_files: build/index.html
+    upload: build/index.html
+
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+```
+
+**package.json** 스크립트 추가:
+```json
+{
+  "scripts": {
+    "build:production": "npm run build && npm run build:server",
+    "build:server": "cd server && npm install --production",
+    "start": "cd server && node index.js",
+    "gcp:deploy": "gcloud app deploy"
+  }
+}
+```
+
+#### 4. 배포 실행
+```bash
+# 1. 프로젝트 빌드
+npm run build:production
+
+# 2. GCP 배포
+npm run gcp:deploy
+
+# 3. 배포된 앱 열기
+gcloud app browse
+```
+
+#### 5. 환경 변수 설정
+GCP Console에서 App Engine → 설정 → 환경 변수에 다음 추가:
+- `KAKAO_API_KEY`: 카카오 API 키
+- `JWT_SECRET`: JWT 시크릿 키
+- `DATABASE_URL`: 프로덕션 데이터베이스 URL
+
+#### 6. 도메인 연결 (선택사항)
+```bash
+# 커스텀 도메인 설정
+gcloud app domain-mappings create your-domain.com
+```
+
+### 배포 후 확인사항
+- [ ] API 엔드포인트 정상 동작 확인
+- [ ] 정적 파일 로딩 확인
+- [ ] 데이터베이스 연결 확인
+- [ ] 카카오 API 호출 확인
+
+### 모니터링 및 로그
+```bash
+# 로그 확인
+gcloud app logs tail -s default
+
+# 모니터링 대시보드
+gcloud app browse --service=default
+```
 
 ## 📄 라이선스
 
