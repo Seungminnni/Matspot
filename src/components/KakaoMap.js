@@ -87,11 +87,14 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     
     const infowindow = new window.kakao.maps.InfoWindow({
       content: infoContent
-    });
-
-    // 마커 클릭 시 인포윈도우 표시
+    });    // 마커 클릭 시 인포윈도우 표시 (3초 후 자동 닫기)
     window.kakao.maps.event.addListener(marker, 'click', function() {
       infowindow.open(mapRef.current, marker);
+      
+      // 3초 후 자동으로 인포윈도우 닫기
+      setTimeout(() => {
+        infowindow.close();
+      }, 3000);
     });
 
     // 지도 중심을 선택된 레스토랑으로 이동
@@ -131,16 +134,19 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       image: markerImage
     });
     marker.setMap(mapRef.current);
-    customLocationMarkerRef.current = marker;
-
-    // 인포윈도우 생성
+    customLocationMarkerRef.current = marker;    // 인포윈도우 생성
     const infowindow = new window.kakao.maps.InfoWindow({
       content: '<div style="padding:5px;font-size:12px;color:#1e40af;">검색 위치</div>'
     });
 
-    // 마커 클릭 이벤트
+    // 마커 클릭 이벤트 (3초 후 자동 닫기)
     window.kakao.maps.event.addListener(marker, 'click', function() {
       infowindow.open(mapRef.current, marker);
+      
+      // 3초 후 자동으로 인포윈도우 닫기
+      setTimeout(() => {
+        infowindow.close();
+      }, 3000);
     });
 
     // 검색 중심 좌표 업데이트
@@ -171,16 +177,19 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       image: markerImage
     });
     marker.setMap(mapRef.current);
-    currentLocationMarkerRef.current = marker;
-
-    // 인포윈도우 생성
+    currentLocationMarkerRef.current = marker;    // 인포윈도우 생성
     const infowindow = new window.kakao.maps.InfoWindow({
       content: '<div style="padding:5px;font-size:12px;color:#ef4444;">현재 위치</div>'
     });
 
-    // 마커 클릭 이벤트
+    // 마커 클릭 이벤트 (3초 후 자동 닫기)
     window.kakao.maps.event.addListener(marker, 'click', function() {
       infowindow.open(mapRef.current, marker);
+      
+      // 3초 후 자동으로 인포윈도우 닫기
+      setTimeout(() => {
+        infowindow.close();
+      }, 3000);
     });
   };
     // 장소 검색 함수를 useCallback으로 메모이제이션 (45개 결과 pagination 지원)
@@ -262,10 +271,14 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
           const infowindow = new window.kakao.maps.InfoWindow({
             content: `<div style="padding:5px;font-size:12px;">${place.place_name}</div>`
           });
-          
-          // 마커 이벤트 등록
+            // 마커 이벤트 등록 (3초 후 자동 닫기)
           window.kakao.maps.event.addListener(marker, 'click', function() {
             infowindow.open(mapRef.current, marker);
+            
+            // 3초 후 자동으로 인포윈도우 닫기
+            setTimeout(() => {
+              infowindow.close();
+            }, 3000);
           });
           
           window.kakao.maps.event.addListener(marker, 'mouseover', function() {
@@ -1010,15 +1023,18 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
         new window.kakao.maps.Size(36, 37)
       )
     });
-    startMarker.setMap(mapRef.current);
-
-    // 시작점 인포윈도우
+    startMarker.setMap(mapRef.current);    // 시작점 인포윈도우
     const startInfoWindow = new window.kakao.maps.InfoWindow({
       content: `<div style="padding:10px;font-size:12px;"><strong>출발지</strong><br/>${startPlace.place_name}</div>`
     });
     
     window.kakao.maps.event.addListener(startMarker, 'click', function() {
       startInfoWindow.open(mapRef.current, startMarker);
+      
+      // 3초 후 자동으로 인포윈도우 닫기
+      setTimeout(() => {
+        startInfoWindow.close();
+      }, 3000);
     });
 
     // 도착점 마커 (빨간색) - SVG
@@ -1040,15 +1056,18 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
         new window.kakao.maps.Size(36, 37)
       )
     });
-    endMarker.setMap(mapRef.current);
-
-    // 도착점 인포윈도우
+    endMarker.setMap(mapRef.current);    // 도착점 인포윈도우
     const endInfoWindow = new window.kakao.maps.InfoWindow({
       content: `<div style="padding:10px;font-size:12px;"><strong>도착지</strong><br/>${endPlace.place_name}</div>`
     });
     
     window.kakao.maps.event.addListener(endMarker, 'click', function() {
       endInfoWindow.open(mapRef.current, endMarker);
+      
+      // 3초 후 자동으로 인포윈도우 닫기
+      setTimeout(() => {
+        endInfoWindow.close();
+      }, 3000);
     });
 
     // 마커 참조 저장
@@ -1120,15 +1139,18 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
         image: markerImage,
         zIndex: 10 + index // 마커 겹침 방지를 위한 z-index 설정
       });
-      marker.setMap(mapRef.current);
-
-      // 인포윈도우 생성
+      marker.setMap(mapRef.current);      // 인포윈도우 생성
       const infoWindow = new window.kakao.maps.InfoWindow({
         content: content
       });
       
       window.kakao.maps.event.addListener(marker, 'click', function() {
         infoWindow.open(mapRef.current, marker);
+        
+        // 3초 후 자동으로 인포윈도우 닫기
+        setTimeout(() => {
+          infoWindow.close();
+        }, 3000);
       });
 
       markers.push(marker);
