@@ -492,13 +492,22 @@ const RouteCreationPage = () => {
                     searchKeyword={searchKeyword}
                     searchCount={searchCount}
                     onSearchComplete={handleSearchComplete}
+                    sortOption={activePlace?.selectedSortOption || 'distance'}
                 />
             </div>
 
             {/* 검색 결과 목록 */}
             {!isCurrentPlaceSaved && (
                 <div className="recommendation-list">
-                    <h2>검색 결과 {activePlace && `- ${activePlace.name}`}</h2>
+                    <div className="search-header">
+                        <h2>검색 결과 {activePlace && `- ${activePlace.name}`}</h2>
+                        {activePlace?.selectedSortOption === 'sns' && currentSearchResults.length > 0 && (
+                            <span className="sort-indicator">📱 SNS 인기순</span>
+                        )}
+                        {activePlace?.selectedSortOption === 'rating' && currentSearchResults.length > 0 && (
+                            <span className="sort-indicator">💬 리뷰수순</span>
+                        )}
+                    </div>
                     {currentSearchResults.length > 0 ? (
                         <>
                             <p className="result-count">총 {currentSearchResults.length}개의 결과</p>
@@ -507,12 +516,37 @@ const RouteCreationPage = () => {
                                     <div 
                                         key={index} 
                                         className={`recommendation-item ${currentSelectedRestaurant?.place_name === place.place_name ? 'selected' : ''}`}
+                                        data-sort={activePlace?.selectedSortOption || 'distance'}
                                         onClick={() => handleRestaurantSelect(place)}
                                     >
-                                        <h4>{place.place_name}</h4>
+                                        <div className="place-header">
+                                            <h4>{place.place_name}</h4>
+                                            {place.score && (
+                                                <div className="place-score">
+                                                    ⭐ {place.score.toFixed(2)}
+                                                </div>
+                                            )}
+                                        </div>
                                         <p>{place.address_name}</p>
                                         {place.phone && <p>📞 {place.phone}</p>}
                                         {place.category_name && <p>🏷️ {place.category_name}</p>}
+                                        
+                                        {/* SNS 및 리뷰 정보 */}
+                                        {(place.instagram_mentions !== undefined || place.review_count !== undefined) && (
+                                            <div className="place-stats">
+                                                {place.instagram_mentions !== undefined && (
+                                                    <span className="stat-item">
+                                                        📷 SNS {place.instagram_mentions}개
+                                                    </span>
+                                                )}
+                                                {place.review_count !== undefined && (
+                                                    <span className="stat-item">
+                                                        💬 리뷰 {place.review_count}개
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                        
                                         {currentSelectedRestaurant?.place_name === place.place_name && 
                                             <div className="selection-indicator">✓ 선택됨</div>
                                         }

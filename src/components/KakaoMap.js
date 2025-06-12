@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import '../styles/KakaoMap.css';
 
-const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {}, places, activePlace }, ref) => {
+const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount = 0, onSearchComplete = () => {}, places, activePlace, sortOption = 'distance' }, ref) => {
   const [mapError, setMapError] = useState(null);
   const [searchCenter, setSearchCenter] = useState(null); // 검색 중심 좌표 상태
   const mapRef = useRef(null);
@@ -295,11 +295,14 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       }
       mapRef.current.setLevel(Math.min(mapRef.current.getLevel(), 7));
       
-      // 백엔드로 데이터 전송
+      // 백엔드로 데이터 전송 (기존 로그용)
       await sendSearchResultsToBackend(allResults, keyword, searchOptions.location);
       
-      // 검색 결과 콜백으로 전달
-      onSearchComplete(allResults);
+      // 정렬 옵션에 따라 추천 백엔드와 통신하여 재정렬
+      const finalResults = await fetchRecommendedResults(allResults, sortOption);
+      
+      // 최종 결과를 콜백으로 전달
+      onSearchComplete(finalResults);
     } else {
       const locationMessage = useCurrentPosition ? '현재 위치' : searchCenter ? '선택한 위치' : '현재 지도 화면';
       const distanceKm = distance >= 1000 ? `${distance/1000}km` : `${distance}m`;
@@ -360,6 +363,71 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       console.error('백엔드 전송 오류:', error);
     }
   };
+
+  // SNS 인기순으로 검색 결과 재정렬 (추천 백엔드와 통신)
+  const fetchRecommendedResults = async (searchResults, sortOption = 'distance') => {
+    // 거리순인 경우 백엔드 통신 없이 원본 반환
+    if (sortOption === 'distance') {
+      return searchResults;
+    }
+
+    try {
+      console.log('추천 백엔드 통신 시작:', { sortOption, count: searchResults.length });
+      
+      // 추천 백엔드 URL
+      const backendUrl = 'http://localhost:8000/recommend';
+      
+      // 정렬 옵션을 백엔드 형식으로 변환
+      let rankingPreference = 'distance';
+      if (sortOption === 'sns') {
+        rankingPreference = 'instagram';
+      } else if (sortOption === 'rating') {
+        rankingPreference = 'reviews';
+      }
+
+      const response = await fetch(backendUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          places: searchResults.map(place => ({
+            id: place.id,
+            place_name: place.place_name,
+            category_name: place.category_name,
+            phone: place.phone || '',
+            address_name: place.address_name,
+            road_address_name: place.road_address_name,
+            x: place.x,
+            y: place.y,
+            place_url: place.place_url,
+            distance: place.distance
+          })),
+          ranking_preference: rankingPreference
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`백엔드 추천 API 오류: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('추천 백엔드 응답:', data);
+      
+      // 백엔드에서 받은 점수 정보를 포함한 결과를 반환
+      return data.recommended_places.map(place => ({
+        ...place,
+        score: place.score,
+        instagram_mentions: place.instagram_mentions,
+        review_count: place.review_count
+      }));
+    } catch (error) {
+      console.error('추천 시스템 오류:', error);
+      alert('SNS 인기순 정렬 중 오류가 발생했습니다. 기본 검색 결과를 표시합니다.');
+      // 추천 시스템 실패시 원본 결과 반환
+      return searchResults;
+    }
+  };
   
   // 검색 키워드가 변경될 때 검색 실행 (한 번만 수행)
   useEffect(() => {
@@ -368,35 +436,64 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       mapRef.current &&
       searchKeyword &&
       searchCount > 0 &&
-      lastSearchRef.current !== `${searchKeyword}_${searchCount}`
+      lastSearchRef.current !== `${searchKeyword}_${searchCount}_${sortOption}`
     ) {
       setMapError(null);
       const effectiveKeyword = searchKeyword || '맛집';
       searchPlaces(effectiveKeyword, false);
-      lastSearchRef.current = `${searchKeyword}_${searchCount}`;
+      lastSearchRef.current = `${searchKeyword}_${searchCount}_${sortOption}`;
     }
-  }, [searchKeyword, searchCount, searchPlaces]);
+  }, [searchKeyword, searchCount, sortOption, searchPlaces]);
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // 이미 스크립트가 있으면 중복 추가 방지
-    if (!window.kakao) {
-      const script = document.createElement('script');
-      script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=c6d12eab1ef43ca9745a713e8669183b&libraries=services&autoload=false";
-      script.async = true;
-      document.head.appendChild(script);
+    // 카카오맵 초기화 함수
+    const initializeKakaoMap = () => {
+      try {
+        // 카카오맵 객체 확인
+        if (!window.kakao) {
+          console.error('카카오맵 스크립트가 로드되지 않았습니다.');
+          setMapError('카카오맵 스크립트를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+          return;
+        }
 
-      script.onload = () => {
+        if (!window.kakao.maps) {
+          console.error('카카오맵 라이브러리가 로드되지 않았습니다.');
+          setMapError('카카오맵 라이브러리를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+          return;
+        }
+
+        // 카카오맵 라이브러리 로드 및 지도 생성
         window.kakao.maps.load(() => {
+          console.log('카카오맵 라이브러리 로드 완료');
           createMap();
         });
-      };
-      
-      script.onerror = () => {
-        setMapError('카카오맵 스크립트 로드에 실패했습니다.');
-      };
-    } else if (window.kakao && window.kakao.maps) {
-      createMap();
+
+      } catch (error) {
+        console.error('카카오맵 초기화 오류:', error);
+        setMapError(`카카오맵 초기화 실패: ${error.message}`);
+      }
+    };
+
+    // 카카오맵이 이미 로드되어 있으면 바로 초기화
+    if (window.kakao && window.kakao.maps) {
+      initializeKakaoMap();
+    } else {
+      // 카카오맵 스크립트가 로드될 때까지 대기
+      const checkKakaoMap = setInterval(() => {
+        if (window.kakao && window.kakao.maps) {
+          clearInterval(checkKakaoMap);
+          initializeKakaoMap();
+        }
+      }, 100);
+
+      // 10초 후 타임아웃
+      setTimeout(() => {
+        clearInterval(checkKakaoMap);
+        if (!window.kakao || !window.kakao.maps) {
+          setMapError('카카오맵 로드 타임아웃. 네트워크 연결을 확인하고 페이지를 새로고침해주세요.');
+        }
+      }, 10000);
     }
     
     function createMap() {

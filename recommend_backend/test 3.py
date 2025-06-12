@@ -166,6 +166,28 @@ async def process_and_rank_restaurants(request: SearchRequest):
     ranked_list = sorted(scored_places, key=lambda p: p.score, reverse=True)
     return ranked_list[:6]
 
+# 프론트엔드 요청을 위한 /recommend 엔드포인트 추가
+class RecommendRequest(BaseModel):
+    places: List[Place]
+    ranking_preference: str = 'instagram'
+
+class RecommendResponse(BaseModel):
+    recommended_places: List[RankedPlace]
+
+@app.post("/recommend", response_model=RecommendResponse)
+async def recommend_places(request: RecommendRequest):
+    """프론트엔드에서 사용하는 추천 엔드포인트"""
+    # 기존 SearchRequest 형식으로 변환
+    search_request = SearchRequest(
+        searchResults=request.places,
+        rankingPreference=request.ranking_preference
+    )
+    
+    # 기존 추천 로직 재사용
+    recommended_places = await process_and_rank_restaurants(search_request)
+    
+    return RecommendResponse(recommended_places=recommended_places)
+
 # =======================================================
 #  ★ 로컬 테스트 실행 블록 (가중치 테스트 포함) ★
 # =======================================================

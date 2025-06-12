@@ -82,10 +82,6 @@ const KeywordFilter = ({ place, updatePlace, onSearch }) => {
 
     // 키워드2 선택 함수
     const selectSortOption = (optionId) => {
-        if (optionId === 'sns' || optionId === 'rating') {
-            alert(`${optionId === 'sns' ? 'SNS 인기순' : '리뷰수'}은 아직 구현되지 않았습니다. 거리순을 선택해주세요.`);
-            return; 
-        }
         updatePlace(place.id, { selectedSortOption: optionId });
     };
 

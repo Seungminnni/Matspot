@@ -296,6 +296,36 @@ router.post('/directions', async (req, res) => {
     }
 });
 
+// 검색 결과 처리 엔드포인트 (로그용)
+router.post('/process-search', async (req, res) => {
+    try {
+        const { searchResults, searchKeyword, searchLocation, timestamp } = req.body;
+
+        console.log('검색 결과 수신:', {
+            키워드: searchKeyword,
+            결과수: searchResults?.length || 0,
+            위치: searchLocation,
+            시간: timestamp
+        });
+
+        // 검색 결과 로그 저장 (필요시 DB에 저장 가능)
+        // 현재는 단순히 로그만 출력
+
+        res.json({
+            success: true,
+            message: '검색 결과가 성공적으로 처리되었습니다.',
+            processed_count: searchResults?.length || 0
+        });
+
+    } catch (error) {
+        console.error('검색 결과 처리 오류:', error);
+        res.status(500).json({
+            success: false,
+            error: '검색 결과 처리 중 오류가 발생했습니다.'
+        });
+    }
+});
+
 // 직선 거리 계산 함수 (Haversine formula)
 function calculateStraightDistance(lat1, lng1, lat2, lng2) {
     const R = 6371; // 지구 반지름 (km)

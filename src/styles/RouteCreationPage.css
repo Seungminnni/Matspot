@@ -582,6 +582,87 @@ body {
     cursor: not-allowed;
 }
 
+/* SNS 인기순 결과 표시 스타일 */
+.place-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.place-score {
+    background: linear-gradient(135deg, #ff6b6b, #ffa500);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+}
+
+.place-stats {
+    display: flex;
+    gap: 12px;
+    margin: 8px 0;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #666;
+    border: 1px solid #e9ecef;
+}
+
+.stat-item:first-child {
+    background: linear-gradient(135deg, #e91e63, #f06292);
+    color: white;
+    border: none;
+}
+
+.stat-item:last-child {
+    background: linear-gradient(135deg, #2196f3, #64b5f6);
+    color: white;
+    border: none;
+}
+
+/* 정렬 옵션별 표시 스타일 */
+.recommendation-item[data-sort="sns"] {
+    border-left: 4px solid #e91e63;
+}
+
+.recommendation-item[data-sort="rating"] {
+    border-left: 4px solid #2196f3;
+}
+
+.recommendation-item[data-sort="distance"] {
+    border-left: 4px solid #4caf50;
+}
+
+/* 검색 헤더 스타일 */
+.search-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.search-header h2 {
+    margin: 0;
+}
+
+.sort-indicator {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .route-places {
