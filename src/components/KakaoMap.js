@@ -54,15 +54,19 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     // 기존 단일 핀 제거
     if (singlePinMarkerRef.current) {
       singlePinMarkerRef.current.setMap(null);
-    }
-
-    // 레스토랑 위치 좌표 생성
+    }    // 레스토랑 위치 좌표 생성
     const position = new window.kakao.maps.LatLng(restaurant.y, restaurant.x);
     
-    // 빨간색 마커 이미지 설정
-    const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
+    // 빨간색 마커 이미지 설정 (SVG)
+    const redMarkerSVG = `data:image/svg+xml;base64,${btoa(`
+      <svg width="36" height="40" viewBox="0 0 36 40" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 2C27.389 2 35 9.611 35 19C35 28.389 18 38 18 38S1 28.389 1 19C1 9.611 8.611 2 18 2Z" 
+              fill="#dc3545" stroke="white" stroke-width="2"/>
+        <circle cx="18" cy="19" r="8" fill="white"/>
+      </svg>
+    `)}`;
     const imageSize = new window.kakao.maps.Size(36, 40);
-    const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
+    const markerImage = new window.kakao.maps.MarkerImage(redMarkerSVG, imageSize);
 
     // 단일 핀 마커 생성
     const marker = new window.kakao.maps.Marker({
@@ -109,12 +113,17 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     // 기존 커스텀 마커 제거
     if (customLocationMarkerRef.current) {
       customLocationMarkerRef.current.setMap(null);
-    }
-
-    // 파란색 마커 이미지 설정
-    const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+    }    // 파란색 마커 이미지 설정 (SVG)
+    const blueStar = `data:image/svg+xml;base64,${btoa(`
+      <svg width="24" height="35" viewBox="0 0 24 35" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C18.627 2 24 7.373 24 14C24 20.627 12 33 12 33S0 20.627 0 14C0 7.373 5.373 2 12 2Z" 
+              fill="#1e40af" stroke="white" stroke-width="2"/>
+        <path d="M12 8L14.472 13.236L20 13.236L15.764 16.528L18.236 21.764L12 18.472L5.764 21.764L8.236 16.528L4 13.236L9.528 13.236Z" 
+              fill="white"/>
+      </svg>
+    `)}`;
     const imageSize = new window.kakao.maps.Size(24, 35);
-    const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
+    const markerImage = new window.kakao.maps.MarkerImage(blueStar, imageSize);
 
     // 새 커스텀 마커 생성
     const marker = new window.kakao.maps.Marker({
@@ -145,12 +154,16 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
     // 기존 현재 위치 마커 제거
     if (currentLocationMarkerRef.current) {
       currentLocationMarkerRef.current.setMap(null);
-    }
-
-    // 빨간색 마커 이미지 설정
-    const imageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMzUiIHZpZXdCb3g9IjAgMCAyNCAzNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDMuNUM3LjMwNTU4IDMuNSAzLjUgNy4zMDU1OCAzLjUgMTJDMy41IDE4LjUgMTIgMzEuNSAxMiAzMS41UzIwLjUgMTguNSAyMC41IDEyQzIwLjUgNy4zMDU1OCAxNi42OTQ0IDMuNSAxMiAzLjVaIiBmaWxsPSIjRUY0NDQ0IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjMiLz4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+';
+    }    // 현재 위치 마커 이미지 설정 (SVG)
+    const currentLocationSVG = `data:image/svg+xml;base64,${btoa(`
+      <svg width="24" height="35" viewBox="0 0 24 35" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3.5C7.30558 3.5 3.5 7.30558 3.5 12C3.5 18.5 12 31.5 12 31.5S20.5 18.5 20.5 12C20.5 7.30558 16.6944 3.5 12 3.5Z" 
+              fill="#EF4444" stroke="white" stroke-width="3"/>
+        <circle cx="12" cy="12" r="4" fill="white"/>
+      </svg>
+    `)}`;
     const imageSize = new window.kakao.maps.Size(24, 35);
-    const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
+    const markerImage = new window.kakao.maps.MarkerImage(currentLocationSVG, imageSize);
 
     // 새 현재 위치 마커 생성
     const marker = new window.kakao.maps.Marker({
@@ -955,25 +968,45 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
         path.forEach(point => bounds.extend(point));
         allCoordinates.push(...routeData.coordinates);
       }
-    });
-
-    // 다중 경로 마커 생성
+    });    // 다중 경로 마커 생성
     createMultiRouteMarkers(places);
 
-    // 지도 화면을 모든 경로에 맞게 조정
+    // 지도 화면을 모든 경로에 맞게 조정 (패딩 추가로 마커가 잘리지 않도록)
     if (allCoordinates.length > 0) {
+      // 모든 마커 위치도 바운드에 포함
+      places.forEach(place => {
+        bounds.extend(new window.kakao.maps.LatLng(place.y, place.x));
+      });
+      
       mapRef.current.setBounds(bounds);
+      
+      // 바운드 설정 후 약간의 여백을 위해 줌 레벨 조정
+      setTimeout(() => {
+        const currentLevel = mapRef.current.getLevel();
+        if (currentLevel < 3) {
+          mapRef.current.setLevel(Math.min(currentLevel + 1, 5));
+        }
+      }, 100);
     }
   };
-
   // 경로 마커 생성
   const createRouteMarkers = (startPlace, endPlace) => {
-    // 시작점 마커 (녹색)
+    // 시작점 마커 (파란색) - SVG
+    const startSVG = `data:image/svg+xml;base64,${btoa(`
+      <svg width="36" height="37" viewBox="0 0 36 37" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 2C27.389 2 35 9.611 35 19C35 28.389 18 35 18 35S1 28.389 1 19C1 9.611 8.611 2 18 2Z" 
+              fill="#007bff" stroke="white" stroke-width="2"/>
+        <circle cx="18" cy="19" r="12" fill="white"/>
+        <text x="18" y="25" text-anchor="middle" font-family="Arial, sans-serif" 
+              font-size="14" font-weight="bold" fill="#007bff">S</text>
+      </svg>
+    `)}`;
+
     const startPosition = new window.kakao.maps.LatLng(startPlace.y, startPlace.x);
     const startMarker = new window.kakao.maps.Marker({
       position: startPosition,
       image: new window.kakao.maps.MarkerImage(
-        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_blue.png',
+        startSVG,
         new window.kakao.maps.Size(36, 37)
       )
     });
@@ -988,12 +1021,22 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
       startInfoWindow.open(mapRef.current, startMarker);
     });
 
-    // 도착점 마커 (빨간색)
+    // 도착점 마커 (빨간색) - SVG
+    const endSVG = `data:image/svg+xml;base64,${btoa(`
+      <svg width="36" height="37" viewBox="0 0 36 37" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 2C27.389 2 35 9.611 35 19C35 28.389 18 35 18 35S1 28.389 1 19C1 9.611 8.611 2 18 2Z" 
+              fill="#dc3545" stroke="white" stroke-width="2"/>
+        <circle cx="18" cy="19" r="12" fill="white"/>
+        <text x="18" y="25" text-anchor="middle" font-family="Arial, sans-serif" 
+              font-size="14" font-weight="bold" fill="#dc3545">E</text>
+      </svg>
+    `)}`;
+
     const endPosition = new window.kakao.maps.LatLng(endPlace.y, endPlace.x);
     const endMarker = new window.kakao.maps.Marker({
       position: endPosition,
       image: new window.kakao.maps.MarkerImage(
-        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_red.png',
+        endSVG,
         new window.kakao.maps.Size(36, 37)
       )
     });
@@ -1010,38 +1053,76 @@ const KakaoMap = forwardRef(({ distance = 1000, searchKeyword = '', searchCount 
 
     // 마커 참조 저장
     routeMarkersRef.current = [startMarker, endMarker];
-  };
-
-  // 다중 경로 마커 생성
+  };  // 다중 경로 마커 생성
   const createMultiRouteMarkers = (places) => {
     const markers = [];
-    const markerImages = [
-      'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', // 검색위치 - 별 모양
-      'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_blue.png', // 1번장소 - 파란색
-      'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_red.png'   // 2번장소 - 빨간색
-    ];
-
+    
     places.forEach((place, index) => {
       const position = new window.kakao.maps.LatLng(place.y, place.x);
+      
+      // 마커 이미지와 크기 설정
+      let markerImageSrc, imageSize, imageOffset, content;
+        if (index === 0) {
+        // 검색 위치 (출발지) - 별 모양 SVG
+        const starSVG = `data:image/svg+xml;base64,${btoa(`
+          <svg width="24" height="35" viewBox="0 0 24 35" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C18.627 2 24 7.373 24 14C24 20.627 12 33 12 33S0 20.627 0 14C0 7.373 5.373 2 12 2Z" 
+                  fill="#FFD700" stroke="white" stroke-width="2"/>
+            <path d="M12 8L14.472 13.236L20 13.236L15.764 16.528L18.236 21.764L12 18.472L5.764 21.764L8.236 16.528L4 13.236L9.528 13.236Z" 
+                  fill="white"/>
+          </svg>
+        `)}`;
+        markerImageSrc = starSVG;
+        imageSize = new window.kakao.maps.Size(24, 35);
+        imageOffset = new window.kakao.maps.Point(12, 35);
+        content = `<div style="padding:10px;font-size:12px;"><strong>🚀 출발지</strong><br/>${place.place_name}</div>`;
+      } else if (index === 1) {
+        // 1번째 장소 - 파란색 숫자 마커 SVG
+        const blueSVG = `data:image/svg+xml;base64,${btoa(`
+          <svg width="36" height="37" viewBox="0 0 36 37" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 2C27.389 2 35 9.611 35 19C35 28.389 18 35 18 35S1 28.389 1 19C1 9.611 8.611 2 18 2Z" 
+                  fill="#007bff" stroke="white" stroke-width="2"/>
+            <circle cx="18" cy="19" r="12" fill="white"/>
+            <text x="18" y="25" text-anchor="middle" font-family="Arial, sans-serif" 
+                  font-size="14" font-weight="bold" fill="#007bff">1</text>
+          </svg>
+        `)}`;
+        markerImageSrc = blueSVG;
+        imageSize = new window.kakao.maps.Size(36, 37);
+        imageOffset = new window.kakao.maps.Point(18, 37);
+        content = `<div style="padding:10px;font-size:12px;"><strong>📍 1번째 장소</strong><br/>${place.place_name}</div>`;
+      } else if (index === 2) {
+        // 2번째 장소 - 빨간색 숫자 마커 SVG
+        const redSVG = `data:image/svg+xml;base64,${btoa(`
+          <svg width="36" height="37" viewBox="0 0 36 37" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 2C27.389 2 35 9.611 35 19C35 28.389 18 35 18 35S1 28.389 1 19C1 9.611 8.611 2 18 2Z" 
+                  fill="#dc3545" stroke="white" stroke-width="2"/>
+            <circle cx="18" cy="19" r="12" fill="white"/>
+            <text x="18" y="25" text-anchor="middle" font-family="Arial, sans-serif" 
+                  font-size="14" font-weight="bold" fill="#dc3545">2</text>
+          </svg>
+        `)}`;
+        markerImageSrc = redSVG;
+        imageSize = new window.kakao.maps.Size(36, 37);
+        imageOffset = new window.kakao.maps.Point(18, 37);
+        content = `<div style="padding:10px;font-size:12px;"><strong>🏁 2번째 장소</strong><br/>${place.place_name}</div>`;
+      }
+
+      // 마커 이미지 생성
+      const markerImage = new window.kakao.maps.MarkerImage(
+        markerImageSrc,
+        imageSize,
+        { offset: imageOffset }
+      );
+
       const marker = new window.kakao.maps.Marker({
         position: position,
-        image: new window.kakao.maps.MarkerImage(
-          markerImages[index],
-          new window.kakao.maps.Size(36, 37)
-        )
+        image: markerImage,
+        zIndex: 10 + index // 마커 겹침 방지를 위한 z-index 설정
       });
       marker.setMap(mapRef.current);
 
       // 인포윈도우 생성
-      let content = '';
-      if (index === 0) {
-        content = `<div style="padding:10px;font-size:12px;"><strong>출발지</strong><br/>${place.place_name}</div>`;
-      } else if (index === 1) {
-        content = `<div style="padding:10px;font-size:12px;"><strong>1번째 장소</strong><br/>${place.place_name}</div>`;
-      } else if (index === 2) {
-        content = `<div style="padding:10px;font-size:12px;"><strong>2번째 장소</strong><br/>${place.place_name}</div>`;
-      }
-
       const infoWindow = new window.kakao.maps.InfoWindow({
         content: content
       });
