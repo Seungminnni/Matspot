@@ -67,10 +67,12 @@
 - **동적 검색 기준**: 
   - 1번째 장소: 사용자 현재 위치 기준
   - 2번째 장소: 1번째 선택 장소 위치 기준
-- **카테고리 필터링**: 
-  - 음식점: FD6 코드로 정확한 식당만 검색
-  - 카페: CE7(카페) + CS2(편의점/간식) 통합 검색
-- **페이지네이션**: 최대 45개 결과 수집 (3페이지)
+- **키워드 기반 검색**: 
+  - 장소 유형: 식당(🍽️), 카페(☕)
+  - 음식 종류: 양식(🍝), 중식(🥢), 일식(🍣), 한식(🍚), 디저트(🍰)
+  - 스마트 키워드 조합: "양식 맛집", "디저트" 등
+- **페이지네이션**: 최대 45개 결과 수집 (3페이지 × 15개)
+- **검색 범위**: 반경 1km 기본 설정
 
 ### 📊 SNS 인기순 추천
 - **4가지 정렬 옵션**:
@@ -390,11 +392,12 @@ analyze_crawling_data()
 
 ### Data & ML
 - **SQLite Database**: 
-  - `finally.db`: Instagram 게시물 데이터
-  - `restarant.db`: 맛집 리뷰 데이터
-  - `matspot.db`: 사용자 인증 데이터
+  - `finally.db`: Instagram 게시물 데이터 (caption_text, hashtags_representation)
+  - `restarant.db`: 맛집 리뷰 데이터 (mapinformation 테이블)
+  - `matspot.db`: 사용자 인증 데이터 (users 테이블)
 - **Python aiosqlite**: 비동기 데이터베이스 처리
-- **하버사인 공식**: 정확한 거리 계산 알고리즘
+- **고도화된 매칭 알고리즘**: 4단계 정규화 및 유사도 매칭
+- **가중치 기반 점수 계산**: 거리, SNS 언급수, 리뷰수 조합
 
 ## 🔧 서버 포트 구성
 
@@ -484,28 +487,28 @@ lsof -i :3000,5001,8000
 ### Express Backend (포트 5001)
 ```bash
 # 사용자 인증
-POST /api/auth/register    # 회원가입
-POST /api/auth/login       # 로그인
+POST /api/auth/register      # 회원가입
+POST /api/auth/login         # 로그인
 
-# 검색 로그
+# 검색 로그 (실제로는 사용되지 않음)
 POST /api/restaurants/process-search  # 검색 결과 로깅
 ```
 
 ### FastAPI Backend (포트 8000)
 ```bash
-# SNS 추천 시스템
-POST /recommend           # 맛집 추천 및 정렬
-GET  /docs               # API 문서 (Swagger UI)
+# SNS 추천 시스템 (실제 사용 엔드포인트)
+POST /api/restaurants/process-search  # 맛집 추천 및 정렬
+GET  /docs                           # API 문서 (Swagger UI)
 ```
 
 #### 추천 API 사용 예시
 ```javascript
-const response = await fetch('http://localhost:8000/recommend', {
+const response = await fetch('http://localhost:8000/api/restaurants/process-search', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    places: searchResults,
-    ranking_preference: 'instagram' // 'distance', 'reviews', 'balanced'
+    searchResults: searchResults,     // 카카오 API 검색 결과
+    rankingPreference: 'instagram'    // 'distance', 'reviews', 'instagram', 'balanced'
   })
 });
 ```
@@ -554,57 +557,113 @@ Matspot/
 │   └── favicon.ico             # 파비콘
 ├── 📂 src/                      # React 소스코드  
 │   ├── 📂 components/           # 리액트 컴포넌트
-│   │   ├── KakaoMap.js         # 🗺️ 지도 통합 컴포넌트
-│   │   ├── RouteCreationPage.js # 🛣️ 루트 생성 페이지
-│   │   ├── KeywordFilter.js    # 🔍 검색 필터
-│   │   └── ...
+│   │   ├── KakaoMap.js         # 🗺️ 지도 통합 컴포넌트 (페이지네이션, 경로표시)
+│   │   ├── RouteCreationPage.js # 🛣️ 루트 생성 페이지 (다중장소관리)
+│   │   ├── KeywordFilter.js    # 🔍 검색 필터 (장소유형, 음식종류, 정렬)
+│   │   ├── RestaurantRecommendation.js # 📱 SNS 추천 시스템
+│   │   ├── Header.js           # 🧭 네비게이션 헤더
+│   │   ├── SearchBar.js        # 🔎 통합 검색바
+│   │   └── ...                 # 기타 컴포넌트들
 │   ├── 📂 pages/                # 페이지 컴포넌트
+│   │   ├── Auth.js             # 🔐 로그인/회원가입
+│   │   ├── MyPage.js           # 👤 마이페이지
+│   │   ├── Nearby.js           # 📍 주변 맛집
+│   │   └── Social.js           # 📱 소셜 기능
+│   ├── 📂 context/              # React Context
+│   │   └── AuthContext.js      # 인증 상태 관리
 │   ├── 📂 services/             # API 서비스
+│   │   ├── authService.js      # 인증 API 호출
+│   │   └── dbService.js        # 데이터베이스 조회
 │   └── 📂 styles/               # CSS 스타일
-├── 📂 server/                   # Express 백엔드
-│   ├── server.js               # 🖥️ 서버 진입점 (포트 5001)
+├── 📂 server/                   # Express 백엔드 (포트 5001)
+│   ├── server.js               # 🖥️ Express 서버 진입점
 │   ├── 📂 routes/              # API 라우트
 │   │   ├── authRoutes.js       # 인증 라우트
 │   │   └── restaurantRoutes.js # 맛집 라우트
 │   ├── 📂 controllers/         # 컨트롤러
-│   └── matspot.db              # 사용자 DB
-├── 📂 recommend_backend/        # FastAPI 추천 시스템
-│   ├── test 3.py               # 🤖 추천 API 서버 (포트 8000)
-│   ├── finally.db              # Instagram 데이터
-│   └── restarant.db            # 리뷰 데이터
+│   │   └── authController.js   # 인증 로직
+│   ├── 📂 middleware/          # 미들웨어
+│   │   └── authMiddleware.js   # JWT 인증 미들웨어
+│   ├── 📂 models/              # 데이터 모델
+│   │   └── User.js            # 사용자 모델
+│   └── matspot.db              # 사용자 인증 DB
+├── 📂 recommend_backend/        # FastAPI 추천 시스템 (포트 8000)
+│   ├── test 3.py               # 🤖 SNS 추천 API 서버
+│   ├── finally.db              # Instagram 크롤링 데이터
+│   └── restarant.db            # 맛집 리뷰 데이터
+├── 📂 crawling/                 # 웹 크롤링 시스템
+│   ├── README.md               # 크롤링 시스템 개요
+│   ├── 📂 test/                # 크롤링 테스트 및 개선
+│   │   ├── prototype.py        # 크롤링 프로토타입
+│   │   ├── model_proto.py      # 데이터베이스 모델
+│   │   ├── finally.db          # 수집된 Instagram 데이터
+│   │   └── README_*.md         # 상세 가이드 문서
+│   ├── chrome-win64/           # Chrome 브라우저 (gitignore)
+│   └── chromedriver-win64/     # Chrome 드라이버 (gitignore)
 ├── package.json                # React 의존성
-└── README.md                   # 프로젝트 문서
+└── README.md                   # 📖 프로젝트 문서
 ```
 
 ## 🔧 핵심 컴포넌트 설명
 
 ### 🗺️ KakaoMap.js
+**핵심 지도 통합 컴포넌트**
 ```javascript
 // 주요 기능
-- 카카오맵 API 통합
-- 마커 관리 (검색, 현재위치, 커스텀)
-- 경로 계산 및 표시
-- SNS 추천 시스템 연동
-- 카테고리 필터링 (FD6, CE7, CS2)
+- 카카오맵 API 통합 및 초기화
+- 다중 마커 관리 시스템 (현재위치, 사용자지정, 검색결과)
+- 페이지네이션 검색 (최대 45개 결과, 3페이지)
+- 경로 계산 및 폴리라인 표시 (단일/다중 경로)
+- SNS 추천 시스템 연동 및 점수 기반 마커 표시
+- 부드러운 지도 이동 및 줌 제어
+- 인포윈도우 자동 관리 (3초 자동 닫기)
+- Geolocation API 연동 현재위치 획득
 ```
+
+**주요 메서드:**
+- `showSinglePin()`: 선택된 레스토랑의 빨간색 마커 표시
+- `showRoute()`: 두 지점 간 경로 표시
+- `showMultiRoute()`: 다중 경유지 경로 표시 (검색위치 → 1번 → 2번)
+- `searchWithPagination()`: 페이지네이션으로 최대 45개 결과 수집
+- `smoothPanAndZoom()`: 부드러운 지도 이동 및 줌 조정
 
 ### 🛣️ RouteCreationPage.js  
+**다중 장소 루트 생성 및 관리 시스템**
 ```javascript
 // 주요 기능
-- 다중 장소 선택 (최대 2개)
-- 동적 검색 기준 위치 설정
-- 경로 정보 표시 (거리, 시간, 통행료)
-- SNS 인기순 정렬 UI
+- 다중 장소 선택 및 관리 (최대 2개 장소)
+- 동적 검색 기준 위치 설정 (1번째: 현재위치, 2번째: 1번 위치 기준)
+- 경로 정보 표시 (거리, 소요시간)  // 통행료는 미구현
+- SNS 인기순 정렬 UI (거리순, SNS순, 리뷰순, 종합점수)
+- 장소별 개별 검색 결과 저장 및 관리
+- 선택된 레스토랑 저장 및 상태 관리
+- 키워드 필터링 연동 (KeywordFilter 컴포넌트)
 ```
 
+**주요 상태 관리:**
+- `placeSearchResults`: 각 장소별 검색 결과 저장
+- `selectedRestaurants`: 각 장소별 선택된 레스토랑 저장
+- `placeSearchCenters`: 각 장소별 검색 중심 좌표 저장
+- `routeInfo`: 최종 경로 정보 (거리, 시간만 포함)
+
 ### 🤖 test 3.py (FastAPI)
+**고도화된 SNS 추천 백엔드 시스템**
 ```python
 # 주요 기능
-- /recommend 엔드포인트
-- Instagram/리뷰 DB 비동기 조회
+- /api/restaurants/process-search 엔드포인트
+- Instagram/리뷰 DB 비동기 조회 (aiosqlite)
 - 4가지 가중치 프리셋 (distance, reviews, instagram, balanced)
-- 하버사인 공식 거리 재계산
+- 하버사인 공식 없음 (카카오 API 거리 사용)
+- 고도화된 4단계 매칭 알고리즘
+- 정규화된 이름 매칭 (영대점 ↔ 영남대점)
+- 중복 제거 인스타그램 언급 수 계산
 ```
+
+**가중치 프리셋:**
+- `distance`: 거리 45%, 리뷰 30%, SNS 25%
+- `reviews`: 거리 20%, 리뷰 80%, SNS 0%
+- `instagram`: 거리 20%, 리뷰 0%, SNS 80%
+- `balanced`: 거리 25%, 리뷰 37.5%, SNS 37.5%
 
 ## ⚙️ 개발 가이드
 
@@ -759,7 +818,3 @@ gcloud app browse --service=default
 🌟 **별표**: 프로젝트가 도움이 되셨다면 별표를 눌러주세요!!
 
 © 2025 Matspot Team. All Rights Reserved.
-© 2025 Matspot Team. All Rights Reserved.
-
-
-cd server; node server.js
