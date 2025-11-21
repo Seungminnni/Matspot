@@ -405,11 +405,11 @@ analyze_all_crawling_data()
 
 ## 🔧 서버 포트 구성
 
-| 서비스 | 포트 | 설명 | 상태 |
-|--------|------|------|------|
-| React Frontend | 3000 | 메인 웹 애플리케이션 | ✅ 실행중 |
-| Express Backend | 5001 | 사용자 인증, 로그 API | ✅ 실행중 |
-| FastAPI ML Backend | 8000 | SNS 분석, 추천 시스템 | ✅ 실행중 |
+| 서비스 | 포트 | 설명 |
+|--------|------|------|
+| React Frontend | 3000 | 메인 웹 애플리케이션
+| Express Backend | 5001 | 사용자 인증, 로그 API
+| FastAPI ML Backend | 8000 | SNS 분석, 추천 시스템
 
 ### API 연동 구조
 ```
@@ -828,12 +828,6 @@ GCP Console에서 App Engine → 설정 → 환경 변수에 다음 추가:
 gcloud app domain-mappings create your-domain.com
 ```
 
-### 배포 후 확인사항
-- [ ] API 엔드포인트 정상 동작 확인
-- [ ] 정적 파일 로딩 확인
-- [ ] 데이터베이스 연결 확인
-- [ ] 카카오 API 호출 확인
-
 ### 모니터링 및 로그
 ```bash
 # 로그 확인
@@ -842,21 +836,9 @@ gcloud app logs tail -s default
 # 모니터링 대시보드
 gcloud app browse --service=default
 ```
+## 배포 관련 참고내용
+GCP, AWS등 클라우드 배포까지 목표였으나, 로컬단에서 프로젝트 종료
 
 ## 📄 라이선스
 
 이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
-
-## 👥 기여자
-
-- **개발팀**: 맛스팟 개발팀
-- **API 제공**: 카카오 개발자센터
-- **데이터**: Instagram 크롤링 데이터, 맛집 리뷰 데이터
-
----
-
-📧 **문의사항**: 개발 관련 문의는 이슈를 등록해주세요.  
-🌟 **별표**: 프로젝트가 도움이 되셨다면 별표를 눌러주세요!  
-🔗 **기술 블로그**: [맛스팟 개발 여정](https://github.com/your-repo)
-
-© 2025 Matspot Team. All Rights Reserved.
